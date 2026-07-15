@@ -9,7 +9,6 @@ import {
   Store, 
   FileText, 
   Flag, 
-  UserPlus, 
   ScrollText,
   ChevronLeft,
   ChevronRight
@@ -31,7 +30,6 @@ export function Sidebar() {
     { name: t('cms'), href: `/${locale}/cms`, icon: FileText },
     { name: t('audit'), href: `/${locale}/audit`, icon: ScrollText },
     { name: t('features'), href: `/${locale}/features`, icon: Flag },
-    { name: t('leads'), href: `/${locale}/leads`, icon: UserPlus },
   ];
 
   return (
