@@ -1,0 +1,59 @@
+# Platform Dashboard - Cursor Rules
+
+## Architecture Principles
+
+- Use Server Components by default
+- Only add "use client" for interactive components
+- Follow TypeScript strict mode (no 'any' types)
+- Use Zod for all validation schemas
+- Use TanStack Table for all data tables
+- Use TanStack Query for API caching
+- Use React Hook Form for complex forms
+
+## Code Style
+
+- Follow the patterns in design.md
+- Use composition over prop drilling
+- Keep components focused (single responsibility)
+- Name files in kebab-case (user-table.tsx)
+- Use named exports for components
+
+## API Integration
+
+- Backend location: ../laratenant-backend/
+- Always read backend controllers for API contracts
+- Use centralized API client (lib/api/client.ts)
+- Handle errors with user-friendly messages
+- Map Laravel ErrorCode enum to frontend messages
+
+## Internationalization
+
+- All UI text must use translation keys
+- Support English (en) and Arabic (ar)
+- Use RTL-aware Tailwind classes (rtl:ml-4)
+- Test both LTR and RTL layouts
+
+## Security
+
+- Never trust client-provided auth data
+- Always validate on server (Server Actions)
+- Use httpOnly cookies for auth tokens
+- Implement CSRF protection
+- Server-side authorization on all mutations
+
+## Testing
+
+- Write unit tests for utilities and business logic
+- Write component tests for forms and tables
+- Write E2E tests for critical workflows
+- Run accessibility tests (jest-axe)
+- Test incrementally at each checkpoint
+
+## Quality
+
+- No console.log in production code
+- Fix TypeScript errors immediately
+- Fix ESLint warnings
+- Maintain consistent code style (Prettier)
+- Add loading states for async operations
+- Add error boundaries for error handling
