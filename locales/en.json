@@ -208,5 +208,38 @@
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this content?",
     "loading": "Loading CMS data..."
+  },
+  "audit": {
+    "title": "Audit Logs",
+    "subtitle": "Track all platform activities and user actions",
+    "export": "Export",
+    "exportCSV": "Export as CSV",
+    "exportJSON": "Export as JSON",
+    "searchPlaceholder": "Search activities...",
+    "allActions": "All Actions",
+    "allResources": "All Resources",
+    "actions": {
+      "created": "Created",
+      "updated": "Updated",
+      "deleted": "Deleted",
+      "suspended": "Suspended",
+      "activated": "Activated",
+      "published": "Published",
+      "archived": "Archived",
+      "login": "Login",
+      "logout": "Logout",
+      "exported": "Exported"
+    },
+    "resources": {
+      "user": "Users",
+      "store": "Stores",
+      "blog_post": "Blog Posts",
+      "page": "Pages",
+      "documentation": "Documentation",
+      "system": "System"
+    },
+    "changes": "Changes",
+    "loading": "Loading audit logs...",
+    "noLogs": "No audit logs found"
   }
 }
