@@ -34,11 +34,17 @@ export function SignInForm() {
       const result = await signInAction(data, locale);
       
       if (!result.success) {
-        // result.message contains the translation key like 'auth.invalidCredentials'
+        // Show user-friendly error
         toast.error(t(result.message as any));
+        
+        // Show debug info in console
+        if (result.debug) {
+          console.error('[SignIn Debug]:', result.debug);
+        }
       }
       // If successful, the action will redirect
     } catch (error) {
+      console.error('[SignIn Error]:', error);
       toast.error(t('common.error'));
     } finally {
       setIsSubmitting(false);

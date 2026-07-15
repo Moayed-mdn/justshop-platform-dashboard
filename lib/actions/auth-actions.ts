@@ -8,7 +8,11 @@ import { ApiException } from '@/lib/api/utils/error-handler';
 
 export async function signInAction(credentials: SignInInput, locale: string) {
   try {
+    console.log('[signInAction] Attempting sign-in with:', { email: credentials.email, apiUrl: process.env.NEXT_PUBLIC_API_URL });
+    
     const response = await signIn(credentials);
+    
+    console.log('[signInAction] Response:', response);
     
     if (response.success) {
       // The backend sets the httpOnly cookie automatically
@@ -21,6 +25,8 @@ export async function signInAction(credentials: SignInInput, locale: string) {
       message: 'auth.invalidCredentials',
     };
   } catch (error) {
+    console.error('[signInAction] Error:', error);
+    
     if (error instanceof ApiException) {
       return {
         success: false,
@@ -28,12 +34,23 @@ export async function signInAction(credentials: SignInInput, locale: string) {
           ? 'auth.invalidCredentials' 
           : 'common.error',
         errors: error.errors,
+        debug: `API Error: ${error.message} (${error.code})`,
+      };
+    }
+    
+    // Network or other errors
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: 'common.error',
+        debug: `Error: ${error.message}`,
       };
     }
     
     return {
       success: false,
       message: 'common.error',
+      debug: 'Unknown error occurred',
     };
   }
 }

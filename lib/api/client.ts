@@ -3,9 +3,40 @@ import { handleApiError } from './utils/error-handler';
 
 export class ApiClient {
   private baseURL: string;
+  private csrfToken: string | null = null;
 
   constructor(baseURL?: string) {
     this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  }
+
+  /**
+   * Get CSRF token from Laravel
+   */
+  private async getCsrfToken(): Promise<string> {
+    if (this.csrfToken) {
+      return this.csrfToken;
+    }
+
+    try {
+      // Laravel Sanctum CSRF cookie endpoint
+      await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
+        credentials: 'include',
+      });
+      
+      // Extract XSRF-TOKEN from cookies
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'XSRF-TOKEN') {
+          this.csrfToken = decodeURIComponent(value);
+          return this.csrfToken;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error);
+    }
+
+    return '';
   }
 
   /**
@@ -17,6 +48,13 @@ export class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
 
+    // Get CSRF token for state-changing methods
+    const method = options?.method?.toUpperCase();
+    let csrfToken = '';
+    if (method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      csrfToken = await this.getCsrfToken();
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -24,6 +62,7 @@ export class ApiClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
           ...options?.headers,
         },
       });
