@@ -32,11 +32,15 @@ export const cmsEndpoints = {
     if (filters?.status) params.append('status', filters.status);
     if (filters?.category) params.append('category', filters.category);
 
-    const response = await apiClient.get<PaginatedResponse<BlogPost>>(
+    // Backend returns: { success, data: BlogPost[], meta: {...} }
+    const response: any = await apiClient.get(
       `/api/v1/platform/cms/blog?${params.toString()}`
     );
 
-    return response.data;
+    return {
+      data: response.data,
+      meta: response.meta
+    };
   },
 
   /**
@@ -61,11 +65,15 @@ export const cmsEndpoints = {
     if (filters?.search) params.append('search', filters.search);
     if (filters?.status) params.append('status', filters.status);
 
-    const response = await apiClient.get<PaginatedResponse<Page>>(
+    // Backend returns: { success, data: Page[], meta: {...} }
+    const response: any = await apiClient.get(
       `/api/v1/platform/cms/pages?${params.toString()}`
     );
 
-    return response.data;
+    return {
+      data: response.data,
+      meta: response.meta
+    };
   },
 
   /**
@@ -80,11 +88,15 @@ export const cmsEndpoints = {
     if (filters?.status) params.append('status', filters.status);
     if (filters?.category) params.append('category', filters.category);
 
-    const response = await apiClient.get<PaginatedResponse<Documentation>>(
+    // Backend returns: { success, data: Documentation[], meta: {...} }
+    const response: any = await apiClient.get(
       `/api/v1/platform/cms/docs?${params.toString()}`
     );
 
-    return response.data;
+    return {
+      data: response.data,
+      meta: response.meta
+    };
   },
 
   /**

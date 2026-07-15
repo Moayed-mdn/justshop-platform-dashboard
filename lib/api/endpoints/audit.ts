@@ -20,11 +20,15 @@ export const auditEndpoints = {
     if (filters?.sort) params.append('sort', filters.sort);
     if (filters?.order) params.append('order', filters.order);
 
-    const response = await apiClient.get<PaginatedResponse<AuditLog>>(
-      `/api/v1/platform/audit-logs?${params.toString()}`
+    // Backend returns: { success, data: AuditLog[], meta: {...} }
+    const response: any = await apiClient.get(
+      `/api/v1/platform/audit/logs?${params.toString()}`
     );
 
-    return response.data;
+    return {
+      data: response.data,
+      meta: response.meta
+    };
   },
 
   /**

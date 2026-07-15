@@ -17,11 +17,15 @@ export const storesEndpoints = {
     if (filters?.sort) params.append('sort', filters.sort);
     if (filters?.order) params.append('order', filters.order);
 
-    const response = await apiClient.get<PaginatedResponse<Store>>(
+    // Backend returns: { success, data: Store[], meta: {...} }
+    const response: any = await apiClient.get(
       `/api/v1/platform/stores?${params.toString()}`
     );
 
-    return response.data;
+    return {
+      data: response.data,
+      meta: response.meta
+    };
   },
 
   /**

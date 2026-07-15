@@ -16,11 +16,15 @@ export const featureFlagsEndpoints = {
     if (filters?.environment) params.append('environment', filters.environment);
     if (filters?.target_type) params.append('target_type', filters.target_type);
 
-    const response = await apiClient.get<PaginatedResponse<FeatureFlag>>(
-      `/api/v1/platform/feature-flags?${params.toString()}`
+    // Backend returns: { success, data: FeatureFlag[], meta: {...} }
+    const response: any = await apiClient.get(
+      `/api/v1/platform/features?${params.toString()}`
     );
 
-    return response.data;
+    return {
+      data: response.data,
+      meta: response.meta
+    };
   },
 
   /**
