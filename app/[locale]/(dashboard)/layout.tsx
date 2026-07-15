@@ -1,39 +1,18 @@
-'use client';
-
-import { Sidebar } from '@/components/dashboard/sidebar';
-import { Header } from '@/components/dashboard/header';
-import { useUIStore } from '@/lib/stores/ui-store';
-import { cn } from '@/lib/utils';
+import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client';
 
 export default function DashboardLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
-  const { sidebarCollapsed } = useUIStore();
-
-  // Mock user data - will be replaced with real data in Phase 3
-  const user = {
-    name: 'Admin User',
-    email: 'admin@example.com',
-    role: 'super_admin',
-  };
-
+  // Note: Auth check moved to client-side to properly handle cookies
+  // See DashboardLayoutClient component
+  
   return (
-    <div className="min-h-screen">
-      <Sidebar />
-      <Header user={user} />
-      
-      <main
-        className={cn(
-          'transition-all duration-300 pt-16',
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
-        )}
-      >
-        <div className="container mx-auto p-6">
-          {children}
-        </div>
-      </main>
-    </div>
+    <DashboardLayoutClient>
+      {children}
+    </DashboardLayoutClient>
   );
 }

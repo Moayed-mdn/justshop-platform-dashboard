@@ -95,19 +95,46 @@ export async function signInAction(credentials: SignInInput, locale: string) {
       console.log('[signInAction] Step 8: Setting', authCookies.length, 'cookies from login response');
       
       for (const setCookie of authCookies) {
-        const [cookiePair] = setCookie.split(';');
+        // Parse the full Set-Cookie string to preserve all attributes
+        const [cookiePair, ...attributes] = setCookie.split(';').map(s => s.trim());
         const [name, value] = cookiePair.split('=');
         
         if (name && value) {
-          cookieStore.set({
+          // Parse cookie attributes
+          const attrs: any = {
             name: name.trim(),
             value: value.trim(),
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
             path: '/',
-          });
-          console.log('[signInAction] Set cookie:', name.trim());
+          };
+          
+          // Parse attributes from original Set-Cookie header
+          for (const attr of attributes) {
+            const [key, val] = attr.split('=').map(s => s.trim());
+            const lowerKey = key.toLowerCase();
+            
+            if (lowerKey === 'httponly') {
+              attrs.httpOnly = true;
+            } else if (lowerKey === 'secure') {
+              attrs.secure = true;
+            } else if (lowerKey === 'samesite') {
+              attrs.sameSite = val?.toLowerCase() || 'lax';
+            } else if (lowerKey === 'max-age') {
+              attrs.maxAge = parseInt(val || '0', 10);
+            } else if (lowerKey === 'expires') {
+              attrs.expires = new Date(val);
+            } else if (lowerKey === 'path') {
+              attrs.path = val || '/';
+            }
+          }
+          
+          // For development, don't use httpOnly so cookies work across server/client
+          if (process.env.NODE_ENV === 'development') {
+            attrs.httpOnly = false;
+          }
+          
+          cookieStore.set(attrs);
+          console.log('[signInAction] Set cookie:', name.trim(), 'with attributes:', 
+            Object.keys(attrs).filter(k => k !== 'name' && k !== 'value'));
         }
       }
       
@@ -142,6 +169,92 @@ export async function signInAction(credentials: SignInInput, locale: string) {
       success: false,
       message: 'common.error',
       debug: 'Unknown error occurred',
+    };
+  }
+}
+
+export async function getCurrentUserAction() {
+  try {
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const cookieStore = await cookies();
+    
+    // Get ALL cookies to see what we have
+    const allCookies = cookieStore.getAll();
+    console.log('[getCurrentUserAction] ALL cookies available:', allCookies.map(c => ({ name: c.name, valuePreview: c.value.substring(0, 20) })));
+    
+    // Get cookies for authenticated request
+    const xsrfToken = cookieStore.get('XSRF-TOKEN')?.value;
+    const sessionCookie = cookieStore.get('ecommerce_session')?.value;
+    
+    console.log('[getCurrentUserAction] Checking cookies:', {
+      hasXsrfToken: !!xsrfToken,
+      hasSessionCookie: !!sessionCookie,
+      xsrfTokenPreview: xsrfToken?.substring(0, 20),
+      sessionCookiePreview: sessionCookie?.substring(0, 20),
+    });
+    
+    if (!xsrfToken || !sessionCookie) {
+      console.log('[getCurrentUserAction] Missing cookies, returning unauthenticated');
+      return {
+        success: false,
+        authenticated: false,
+        user: null,
+      };
+    }
+    
+    const cookieHeader = `XSRF-TOKEN=${xsrfToken}; ecommerce_session=${sessionCookie}`;
+    
+    console.log('[getCurrentUserAction] Calling /auth/me with cookies');
+    console.log('[getCurrentUserAction] Cookie header length:', cookieHeader.length);
+    
+    const response = await fetch(`${baseURL}/api/v1/platform/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Cookie': cookieHeader,
+      },
+    });
+    
+    const responseText = await response.text();
+    console.log('[getCurrentUserAction] Response:', {
+      status: response.ok,
+      httpStatus: response.status,
+      bodyPreview: responseText.substring(0, 200),
+    });
+    
+    if (!response.ok) {
+      console.log('[getCurrentUserAction] Auth check failed, returning unauthenticated');
+      return {
+        success: false,
+        authenticated: false,
+        user: null,
+      };
+    }
+    
+    const data = JSON.parse(responseText);
+    
+    if (data.success && data.data) {
+      console.log('[getCurrentUserAction] Authenticated as:', data.data.user.email);
+      return {
+        success: true,
+        authenticated: true,
+        user: data.data.user,
+        session: data.data.session,
+        config: data.data.config,
+      };
+    }
+    
+    return {
+      success: false,
+      authenticated: false,
+      user: null,
+    };
+  } catch (error) {
+    console.error('[getCurrentUserAction] Error:', error);
+    return {
+      success: false,
+      authenticated: false,
+      user: null,
     };
   }
 }

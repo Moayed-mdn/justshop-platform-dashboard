@@ -1,20 +1,50 @@
-import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
 
 export default function HomePage() {
-  const t = useTranslations('common');
-  const tDashboard = useTranslations('dashboard');
+  const [userName, setUserName] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch user info to display
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            setUserName(data.user.name);
+            setUserEmail(data.user.email);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {tDashboard('welcome')}
+          {loading ? 'Welcome!' : `Welcome, ${userName}! 👋`}
         </h1>
         <p className="text-muted-foreground mt-2">
-          {tDashboard('title')} - Phase 2 Complete ✅
+          {loading ? 'Platform Dashboard' : `Signed in as ${userEmail}`}
+        </p>
+        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
+          ✅ Authentication Working - Phase 2.5 Complete!
         </p>
       </div>
 
@@ -33,6 +63,7 @@ export default function HomePage() {
               <li>✓ Sign-in page with validation</li>
               <li>✓ Session management</li>
               <li>✓ Protected routes</li>
+              <li className="text-emerald-600 dark:text-emerald-400 font-medium">✓ Client-side auth check</li>
             </ul>
           </CardContent>
         </Card>
@@ -50,6 +81,7 @@ export default function HomePage() {
               <li>✓ Header with user menu</li>
               <li>✓ Sign-out functionality</li>
               <li>✓ Responsive design</li>
+              <li className="text-emerald-600 dark:text-emerald-400 font-medium">✓ Real user data</li>
             </ul>
           </CardContent>
         </Card>
@@ -89,6 +121,37 @@ export default function HomePage() {
         </Card>
       </div>
 
+      {/* Authentication Status */}
+      <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950">
+        <CardHeader>
+          <CardTitle className="text-emerald-900 dark:text-emerald-100">
+            🎉 Authentication Successfully Working!
+          </CardTitle>
+          <CardDescription className="text-emerald-700 dark:text-emerald-300">
+            You are now authenticated and can access the dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 text-sm">
+            <div className="flex justify-between items-center p-3 bg-white dark:bg-emerald-900 rounded-lg">
+              <span className="font-medium">Name:</span>
+              <span className="text-emerald-700 dark:text-emerald-300">{loading ? 'Loading...' : userName}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-white dark:bg-emerald-900 rounded-lg">
+              <span className="font-medium">Email:</span>
+              <span className="text-emerald-700 dark:text-emerald-300">{loading ? 'Loading...' : userEmail}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-white dark:bg-emerald-900 rounded-lg">
+              <span className="font-medium">Session:</span>
+              <span className="text-emerald-700 dark:text-emerald-300">✓ Active</span>
+            </div>
+          </div>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-4">
+            Try signing out and accessing this page - you'll be redirected to sign-in!
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Test Buttons */}
       <Card>
         <CardHeader>
@@ -107,10 +170,10 @@ export default function HomePage() {
           <div>
             <p className="text-sm font-medium mb-2">Sample Buttons:</p>
             <div className="flex flex-wrap gap-2">
-              <Button>{t('save')}</Button>
-              <Button variant="secondary">{t('cancel')}</Button>
-              <Button variant="destructive">{t('delete')}</Button>
-              <Button variant="outline">{t('edit')}</Button>
+              <Button>Save</Button>
+              <Button variant="secondary">Cancel</Button>
+              <Button variant="destructive">Delete</Button>
+              <Button variant="outline">Edit</Button>
             </div>
           </div>
         </CardContent>

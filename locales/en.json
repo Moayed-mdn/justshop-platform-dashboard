@@ -64,6 +64,7 @@
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot password?",
     "signInToAccount": "Sign in to your account",
+    "signInSuccess": "Sign in successful!",
     "invalidCredentials": "Invalid email or password",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "signOutSuccess": "You have been signed out successfully",

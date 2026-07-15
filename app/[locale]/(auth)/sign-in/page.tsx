@@ -1,12 +1,45 @@
-import { useTranslations } from 'next-intl';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SignInForm } from '@/components/forms/sign-in-form';
 import { LanguageSwitcher } from '@/components/shared/language-switcher';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 
-export default function SignInPage() {
-  const t = useTranslations('auth');
-  const tDashboard = useTranslations('dashboard');
+export default async function SignInPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const cookieStore = await cookies();
+  
+  // Check if user has session cookie
+  const sessionCookie = cookieStore.get('ecommerce_session');
+  
+  // If session cookie exists, check if it's valid by calling backend
+  if (sessionCookie) {
+    try {
+      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const allCookiesHeader = cookieStore.getAll()
+        .map(c => `${c.name}=${c.value}`)
+        .join('; ');
+      
+      const response = await fetch(`${baseURL}/api/v1/platform/auth/me`, {
+        headers: {
+          'Accept': 'application/json',
+          'Cookie': allCookiesHeader,
+        },
+      });
+      
+      if (response.ok) {
+        // User is authenticated, redirect to dashboard
+        redirect(`/${locale}`);
+      }
+    } catch (error) {
+      // If check fails, let them sign in
+      console.log('[SignInPage] Auth check failed:', error);
+    }
+  }
 
   return (
     <>
@@ -20,10 +53,10 @@ export default function SignInPage() {
       <Card>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            {tDashboard('title')}
+            Platform Dashboard
           </CardTitle>
           <CardDescription className="text-center">
-            {t('signInToAccount')}
+            Sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
