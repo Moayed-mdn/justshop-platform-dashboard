@@ -54,7 +54,8 @@
     "signInToAccount": "تسجيل الدخول إلى حسابك",
     "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "sessionExpired": "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
-    "signOutSuccess": "تم تسجيل الخروج بنجاح"
+    "signOutSuccess": "تم تسجيل الخروج بنجاح",
+    "signingIn": "جارٍ تسجيل الدخول..."
   },
   "validation": {
     "required": "هذا الحقل مطلوب",
