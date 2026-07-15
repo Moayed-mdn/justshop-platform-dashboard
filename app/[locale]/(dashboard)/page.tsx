@@ -1,37 +1,62 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
+import { Users, Store, DollarSign, ShoppingCart, TrendingUp, AlertCircle } from 'lucide-react';
+import { StatCard } from '@/components/dashboard/stat-card';
+import { LineChart } from '@/components/dashboard/charts/line-chart';
+import { BarChart } from '@/components/dashboard/charts/bar-chart';
+import { getMockDashboardStats, getMockUserGrowth, getMockRevenueData } from '@/lib/api/endpoints/dashboard';
+import type { DashboardStats, TimeSeriesData } from '@/lib/types/dashboard';
 
 export default function HomePage() {
   const [userName, setUserName] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [userGrowth, setUserGrowth] = useState<TimeSeriesData | null>(null);
+  const [revenueData, setRevenueData] = useState<TimeSeriesData | null>(null);
 
   useEffect(() => {
-    // Fetch user info to display
-    const fetchUser = async () => {
+    // Fetch user info and dashboard data
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
+        // Fetch authenticated user
+        const userResponse = await fetch('/api/auth/me', {
           credentials: 'include',
         });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.user) {
-            setUserName(data.user.name);
-            setUserEmail(data.user.email);
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData.success && userData.user) {
+            setUserName(userData.user.name);
+            setUserEmail(userData.user.email);
           }
         }
+
+        // For now, use mock data
+        // TODO: Replace with real API calls when backend endpoints are ready
+        setStats(getMockDashboardStats());
+        setUserGrowth(getMockUserGrowth());
+        setRevenueData(getMockRevenueData());
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
+    fetchData();
   }, []);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value);
+  };
+
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat('en-US').format(value);
+  };
 
   return (
     <div className="space-y-8">
@@ -41,161 +66,172 @@ export default function HomePage() {
           {loading ? 'Welcome!' : `Welcome, ${userName}! 👋`}
         </h1>
         <p className="text-muted-foreground mt-2">
-          {loading ? 'Platform Dashboard' : `Signed in as ${userEmail}`}
-        </p>
-        <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
-          ✅ Authentication Working - Phase 2.5 Complete!
+          {loading ? 'Platform Dashboard' : `Here's what's happening with your platform today.`}
         </p>
       </div>
 
-      {/* Feature Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>✅ Authentication</CardTitle>
-            <CardDescription>
-              Sign-in system implemented
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li>✓ API Client configured</li>
-              <li>✓ Sign-in page with validation</li>
-              <li>✓ Session management</li>
-              <li>✓ Protected routes</li>
-              <li className="text-emerald-600 dark:text-emerald-400 font-medium">✓ Client-side auth check</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>✅ Dashboard Shell</CardTitle>
-            <CardDescription>
-              Complete layout with navigation
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li>✓ Collapsible sidebar</li>
-              <li>✓ Header with user menu</li>
-              <li>✓ Sign-out functionality</li>
-              <li>✓ Responsive design</li>
-              <li className="text-emerald-600 dark:text-emerald-400 font-medium">✓ Real user data</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>🌐 Internationalization</CardTitle>
-            <CardDescription>
-              Full i18n support
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li>✓ English & Arabic</li>
-              <li>✓ RTL layout</li>
-              <li>✓ Language switcher</li>
-              <li>✓ Bilingual forms</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>🎨 UI Features</CardTitle>
-            <CardDescription>
-              Complete theming system
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li>✓ Dark/Light modes</li>
-              <li>✓ Theme persistence</li>
-              <li>✓ shadcn/ui components</li>
-              <li>✓ Toast notifications</li>
-            </ul>
-          </CardContent>
-        </Card>
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Users"
+          value={stats ? formatNumber(stats.users.total) : '0'}
+          change={stats?.users.growth_percentage}
+          trend={stats && stats.users.growth_percentage > 0 ? 'up' : 'down'}
+          icon={Users}
+          description="from last month"
+          loading={loading}
+        />
+        <StatCard
+          title="Active Stores"
+          value={stats ? formatNumber(stats.stores.active) : '0'}
+          change={undefined}
+          icon={Store}
+          description={stats ? `${stats.stores.pending} pending` : ''}
+          loading={loading}
+        />
+        <StatCard
+          title="Revenue (This Month)"
+          value={stats ? formatCurrency(stats.revenue.this_month) : '$0'}
+          change={stats?.revenue.growth_percentage}
+          trend={stats && stats.revenue.growth_percentage > 0 ? 'up' : 'down'}
+          icon={DollarSign}
+          description="from last month"
+          loading={loading}
+        />
+        <StatCard
+          title="Orders (This Month)"
+          value={stats ? formatNumber(stats.orders.this_month) : '0'}
+          change={undefined}
+          icon={ShoppingCart}
+          description={stats ? `${stats.orders.pending} pending` : ''}
+          loading={loading}
+        />
       </div>
 
-      {/* Authentication Status */}
-      <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950">
-        <CardHeader>
-          <CardTitle className="text-emerald-900 dark:text-emerald-100">
-            🎉 Authentication Successfully Working!
-          </CardTitle>
-          <CardDescription className="text-emerald-700 dark:text-emerald-300">
-            You are now authenticated and can access the dashboard
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 text-sm">
-            <div className="flex justify-between items-center p-3 bg-white dark:bg-emerald-900 rounded-lg">
-              <span className="font-medium">Name:</span>
-              <span className="text-emerald-700 dark:text-emerald-300">{loading ? 'Loading...' : userName}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-white dark:bg-emerald-900 rounded-lg">
-              <span className="font-medium">Email:</span>
-              <span className="text-emerald-700 dark:text-emerald-300">{loading ? 'Loading...' : userEmail}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-white dark:bg-emerald-900 rounded-lg">
-              <span className="font-medium">Session:</span>
-              <span className="text-emerald-700 dark:text-emerald-300">✓ Active</span>
+      {/* Charts Row */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <LineChart
+          title="User Growth"
+          description="New user registrations over the last 30 days"
+          data={userGrowth?.data || []}
+          loading={loading}
+        />
+        <BarChart
+          title="Monthly Revenue"
+          description="Revenue breakdown by month"
+          data={revenueData?.data || []}
+          loading={loading}
+        />
+      </div>
+
+      {/* Stats Overview */}
+      {stats && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="col-span-2">
+            <div className="grid gap-4">
+              {/* Total Stats Card */}
+              <div className="rounded-lg border bg-card p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Platform Overview
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Users</p>
+                    <p className="text-2xl font-bold">{formatNumber(stats.users.total)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatNumber(stats.users.active)} active users
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Stores</p>
+                    <p className="text-2xl font-bold">{formatNumber(stats.stores.total)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatNumber(stats.stores.active)} active stores
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Revenue</p>
+                    <p className="text-2xl font-bold">{formatCurrency(stats.revenue.total)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      All-time revenue
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                    <p className="text-2xl font-bold">{formatNumber(stats.orders.total)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatNumber(stats.orders.pending)} pending
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-4">
-            Try signing out and accessing this page - you'll be redirected to sign-in!
-          </p>
-        </CardContent>
-      </Card>
 
-      {/* Test Buttons */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🧪 Test Features</CardTitle>
-          <CardDescription>
-            All Phase 1 & 2 features are working
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          {/* Store Status */}
+          <div className="rounded-lg border bg-card p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              Store Status
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">Active</span>
+                  <span className="text-sm font-semibold">{stats.stores.active}</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full"
+                    style={{ width: `${(stats.stores.active / stats.stores.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">Pending</span>
+                  <span className="text-sm font-semibold">{stats.stores.pending}</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-yellow-500 h-2 rounded-full"
+                    style={{ width: `${(stats.stores.pending / stats.stores.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm">Suspended</span>
+                  <span className="text-sm font-semibold">{stats.stores.suspended}</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-red-500 h-2 rounded-full"
+                    style={{ width: `${(stats.stores.suspended / stats.stores.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Info Note */}
+      <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div>
-            <p className="text-sm font-medium mb-2">Navigation:</p>
-            <p className="text-sm text-muted-foreground">
-              Try collapsing the sidebar, switching languages, and toggling dark mode.
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Using Mock Data
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              The statistics and charts shown are using mock data for demonstration. 
+              Connect the backend API endpoints to see real platform data.
             </p>
           </div>
-          <div>
-            <p className="text-sm font-medium mb-2">Sample Buttons:</p>
-            <div className="flex flex-wrap gap-2">
-              <Button>Save</Button>
-              <Button variant="secondary">Cancel</Button>
-              <Button variant="destructive">Delete</Button>
-              <Button variant="outline">Edit</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Next Steps */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🚀 Next: Phase 3</CardTitle>
-          <CardDescription>
-            Dashboard Home & Analytics
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm">
-            <li>• KPI cards with platform statistics</li>
-            <li>• Analytics charts (user growth, revenue, etc.)</li>
-            <li>• Date range filters</li>
-            <li>• Real-time data from backend</li>
-          </ul>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
