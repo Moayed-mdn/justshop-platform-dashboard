@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear All Cookies</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #dc2626;
+        }
+        .info {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        #cookieList {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍪 Cookie Cleaner</h1>
+    
+    <div class="info">
+        <strong>HTTP 431 Error Fix</strong><br>
+        Your browser has accumulated too many cookies (>10KB), causing the "Request Header Fields Too Large" error.
+        Click the button below to clear all cookies.
+    </div>
+
+    <div>
+        <h3>Current Cookies:</h3>
+        <div id="cookieList"></div>
+    </div>
+
+    <button class="btn" onclick="clearAllCookies()">Clear All Cookies</button>
+
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <script>
+        function displayCookies() {
+            const cookies = document.cookie.split(';');
+            const list = document.getElementById('cookieList');
+            
+            if (cookies.length === 1 && cookies[0] === '') {
+                list.innerHTML = '<em>No cookies found</em>';
+                return;
+            }
+
+            let html = '<strong>Total: ' + cookies.length + ' cookies</strong><br><br>';
+            let totalSize = 0;
+
+            cookies.forEach(cookie => {
+                const [name] = cookie.trim().split('=');
+                const size = cookie.length;
+                totalSize += size;
+                html += `• ${name} (${size} bytes)<br>`;
+            });
+
+            html += `<br><strong>Total size: ${totalSize} bytes (${(totalSize/1024).toFixed(2)} KB)</strong>`;
+            list.innerHTML = html;
+        }
+
+        function clearAllCookies() {
+            const cookies = document.cookie.split(';');
+            let cleared = 0;
+
+            // Clear cookies for current domain
+            cookies.forEach(cookie => {
+                const name = cookie.split('=')[0].trim();
+                
+                // Try multiple deletion strategies
+                const deletions = [
+                    `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`,
+                    `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost`,
+                    `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.localhost`,
+                    `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`,
+                ];
+
+                deletions.forEach(del => {
+                    document.cookie = del;
+                });
+
+                cleared++;
+            });
+
+            // Show result
+            const result = document.getElementById('result');
+            result.className = 'info success';
+            result.innerHTML = `<strong>✅ Success!</strong><br>
+                Cleared ${cleared} cookies.<br><br>
+                <strong>Next steps:</strong><br>
+                1. Close this tab<br>
+                2. Go back to the dashboard<br>
+                3. Sign in again<br>
+                4. The error should be resolved`;
+
+            // Refresh cookie display
+            setTimeout(() => {
+                displayCookies();
+            }, 500);
+        }
+
+        // Display cookies on load
+        displayCookies();
+    </script>
+</body>
+</html>
