@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { Eye, Ban, CheckCircle, MoreHorizontal } from 'lucide-react';
+import { Eye, Ban, CheckCircle, MoreHorizontal, Edit, Trash2, UserCog } from 'lucide-react';
 import { usersEndpoints } from '@/lib/api/endpoints/users';
 import type { User, UserFilters } from '@/lib/types/user';
 import { DataTable, type Column } from '@/components/ui/data-table';
@@ -19,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function UsersPage() {
@@ -80,6 +88,36 @@ export default function UsersPage() {
   // Handle page change
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
+  };
+
+  // Handle suspend/activate
+  const handleToggleStatus = async (userId: number, currentStatus: User['status']) => {
+    try {
+      const updatedUser =
+        currentStatus === 'active'
+          ? await usersEndpoints.suspendUser(userId)
+          : await usersEndpoints.activateUser(userId);
+
+      // Update the user in the list
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, status: updatedUser.status } : u))
+      );
+    } catch (error) {
+      console.error('Failed to update user status:', error);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (userId: number) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      await usersEndpoints.deleteUser(userId);
+      // Remove user from list
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+    }
   };
 
   // Get user initials
@@ -181,23 +219,80 @@ export default function UsersPage() {
       className: 'text-right',
       render: (user) => (
         <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild title="View user">
             <Link href={`/${locale}/users/${user.id}`}>
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
           {user.status === 'active' ? (
-            <Button variant="ghost" size="icon" title="Suspend user">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Suspend user"
+              onClick={() => handleToggleStatus(user.id, user.status)}
+            >
               <Ban className="h-4 w-4" />
             </Button>
           ) : (
-            <Button variant="ghost" size="icon" title="Activate user">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Activate user"
+              onClick={() => handleToggleStatus(user.id, user.status)}
+            >
               <CheckCircle className="h-4 w-4" />
             </Button>
           )}
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={`/${locale}/users/${user.id}`}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/${locale}/users/${user.id}?edit=true`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit User
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleToggleStatus(user.id, user.status)}
+              >
+                {user.status === 'active' ? (
+                  <>
+                    <Ban className="mr-2 h-4 w-4" />
+                    Suspend User
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Activate User
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <UserCog className="mr-2 h-4 w-4" />
+                Change Role
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => handleDelete(user.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete User
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },

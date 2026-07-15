@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import {
   ArrowLeft,
@@ -23,16 +23,26 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EditUserDialog } from '@/components/users/edit-user-dialog';
 import { format, formatDistanceToNow } from 'date-fns';
 
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const userId = Number(params.id);
 
   const [user, setUser] = React.useState<UserDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+
+  // Check if edit query param is present
+  React.useEffect(() => {
+    if (searchParams.get('edit') === 'true' && user) {
+      setEditDialogOpen(true);
+    }
+  }, [searchParams, user]);
 
   // Fetch user
   React.useEffect(() => {
@@ -159,7 +169,7 @@ export default function UserDetailPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
@@ -190,6 +200,18 @@ export default function UserDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      {user && (
+        <EditUserDialog
+          user={user}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSuccess={(updatedUser) => {
+            setUser({ ...user, ...updatedUser });
+          }}
+        />
+      )}
 
       {/* User Info */}
       <Card>
