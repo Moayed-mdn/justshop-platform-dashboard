@@ -13,9 +13,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 export function SignInForm() {
-  const t = useTranslations('auth');
-  const tCommon = useTranslations('common');
-  const tValidation = useTranslations('validation');
+  const t = useTranslations();
   const locale = useLocale();
   
   const [showPassword, setShowPassword] = useState(false);
@@ -36,11 +34,12 @@ export function SignInForm() {
       const result = await signInAction(data, locale);
       
       if (!result.success) {
+        // result.message contains the translation key like 'auth.invalidCredentials'
         toast.error(t(result.message as any));
       }
       // If successful, the action will redirect
     } catch (error) {
-      toast.error(tCommon('error'));
+      toast.error(t('common.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -49,7 +48,7 @@ export function SignInForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="email">{t('email')}</Label>
+        <Label htmlFor="email">{t('auth.email')}</Label>
         <Input
           id="email"
           type="email"
@@ -60,13 +59,13 @@ export function SignInForm() {
         />
         {errors.email && (
           <p className="text-sm text-destructive">
-            {tValidation(errors.email.message as any)}
+            {t(errors.email.message as any)}
           </p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">{t('password')}</Label>
+        <Label htmlFor="password">{t('auth.password')}</Label>
         <div className="relative">
           <Input
             id="password"
@@ -80,7 +79,7 @@ export function SignInForm() {
             type="button"
             variant="ghost"
             size="icon"
-            className="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
+            className="absolute top-0 right-0 rtl:left-0 rtl:right-auto h-full px-3 hover:bg-transparent"
             onClick={() => setShowPassword(!showPassword)}
             disabled={isSubmitting}
           >
@@ -96,7 +95,7 @@ export function SignInForm() {
         </div>
         {errors.password && (
           <p className="text-sm text-destructive">
-            {tValidation(errors.password.message as any)}
+            {t(errors.password.message as any)}
           </p>
         )}
       </div>
@@ -105,10 +104,10 @@ export function SignInForm() {
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {t('signingIn')}
+            {t('auth.signingIn')}
           </>
         ) : (
-          t('signIn')
+          t('auth.signIn')
         )}
       </Button>
     </form>

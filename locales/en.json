@@ -29,6 +29,18 @@
     "noResults": "No results found",
     "tryAgain": "Try Again"
   },
+  "errors": {
+    "unauthorized": "You are not authorized to perform this action",
+    "forbidden": "Access forbidden",
+    "notFound": "Resource not found",
+    "serverError": "Server error occurred",
+    "validationError": "Validation failed",
+    "userNotFound": "User not found",
+    "userAlreadySuspended": "User is already suspended",
+    "cannotSuspendSelf": "You cannot suspend yourself",
+    "storeNotFound": "Store not found",
+    "storeAlreadySuspended": "Store is already suspended"
+  },
   "navigation": {
     "home": "Home",
     "users": "Users",

@@ -29,6 +29,18 @@
     "noResults": "لم يتم العثور على نتائج",
     "tryAgain": "حاول مرة أخرى"
   },
+  "errors": {
+    "unauthorized": "غير مصرح لك بتنفيذ هذا الإجراء",
+    "forbidden": "الوصول محظور",
+    "notFound": "المورد غير موجود",
+    "serverError": "حدث خطأ في الخادم",
+    "validationError": "فشل التحقق",
+    "userNotFound": "المستخدم غير موجود",
+    "userAlreadySuspended": "المستخدم موقوف بالفعل",
+    "cannotSuspendSelf": "لا يمكنك إيقاف نفسك",
+    "storeNotFound": "المتجر غير موجود",
+    "storeAlreadySuspended": "المتجر موقوف بالفعل"
+  },
   "navigation": {
     "home": "الرئيسية",
     "users": "المستخدمون",
