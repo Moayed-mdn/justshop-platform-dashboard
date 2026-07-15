@@ -2,20 +2,101 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { signIn, signOut } from '@/lib/api/endpoints/auth';
 import type { SignInInput } from '@/lib/validation/auth.schema';
-import { ApiException } from '@/lib/api/utils/error-handler';
 
 export async function signInAction(credentials: SignInInput, locale: string) {
   try {
-    console.log('[signInAction] Attempting sign-in with:', { email: credentials.email, apiUrl: process.env.NEXT_PUBLIC_API_URL });
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     
-    const response = await signIn(credentials);
+    console.log('[signInAction] Step 1: Getting CSRF cookie from:', `${baseURL}/sanctum/csrf-cookie`);
     
-    console.log('[signInAction] Response:', response);
+    // Step 1: Get CSRF cookie
+    const csrfResponse = await fetch(`${baseURL}/sanctum/csrf-cookie`, {
+      credentials: 'include',
+    });
     
-    if (response.success) {
-      // The backend sets the httpOnly cookie automatically
+    // Extract cookies from the response
+    const setCookieHeaders = csrfResponse.headers.getSetCookie();
+    console.log('[signInAction] Step 2: Received cookies:', setCookieHeaders.length);
+    
+    // Parse XSRF-TOKEN from Set-Cookie headers
+    let xsrfToken = '';
+    let sessionCookie = '';
+    
+    for (const setCookie of setCookieHeaders) {
+      if (setCookie.includes('XSRF-TOKEN=')) {
+        const match = setCookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) {
+          xsrfToken = decodeURIComponent(match[1]);
+        }
+      }
+      if (setCookie.includes('laravel_session=')) {
+        sessionCookie = setCookie.split(';')[0];
+      }
+    }
+    
+    console.log('[signInAction] Step 3: XSRF Token found:', !!xsrfToken);
+    
+    if (!xsrfToken) {
+      return {
+        success: false,
+        message: 'common.error',
+        debug: 'Failed to get CSRF token from backend',
+      };
+    }
+    
+    // Step 2: Make login request with CSRF token
+    console.log('[signInAction] Step 4: Attempting login to:', `${baseURL}/api/v1/users/auth/login`);
+    
+    const loginResponse = await fetch(`${baseURL}/api/v1/users/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-XSRF-TOKEN': xsrfToken,
+        'Cookie': sessionCookie,
+      },
+      credentials: 'include',
+      body: JSON.stringify(credentials),
+    });
+    
+    const data = await loginResponse.json();
+    console.log('[signInAction] Step 5: Login response:', { status: loginResponse.status, success: data.success });
+    
+    if (!loginResponse.ok) {
+      return {
+        success: false,
+        message: data.code === 'AUTH_INVALID_CREDENTIALS' 
+          ? 'auth.invalidCredentials' 
+          : 'common.error',
+        debug: `API Error: ${data.message} (${data.code})`,
+      };
+    }
+    
+    if (data.success) {
+      // Store auth cookies in Next.js
+      const cookieStore = await cookies();
+      
+      // Forward Laravel cookies to the browser
+      const authCookies = loginResponse.headers.getSetCookie();
+      for (const setCookie of authCookies) {
+        const [cookiePair, ...attributes] = setCookie.split(';');
+        const [name, value] = cookiePair.split('=');
+        
+        if (name && value) {
+          cookieStore.set({
+            name: name.trim(),
+            value: value.trim(),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+          });
+        }
+      }
+      
+      console.log('[signInAction] Step 6: Redirecting to dashboard');
+      
       // Redirect to dashboard
       redirect(`/${locale}`);
     }
@@ -27,19 +108,12 @@ export async function signInAction(credentials: SignInInput, locale: string) {
   } catch (error) {
     console.error('[signInAction] Error:', error);
     
-    if (error instanceof ApiException) {
-      return {
-        success: false,
-        message: error.code === 'AUTH_INVALID_CREDENTIALS' 
-          ? 'auth.invalidCredentials' 
-          : 'common.error',
-        errors: error.errors,
-        debug: `API Error: ${error.message} (${error.code})`,
-      };
-    }
-    
-    // Network or other errors
     if (error instanceof Error) {
+      // Don't catch redirect
+      if (error.message.includes('NEXT_REDIRECT')) {
+        throw error;
+      }
+      
       return {
         success: false,
         message: 'common.error',
@@ -57,15 +131,21 @@ export async function signInAction(credentials: SignInInput, locale: string) {
 
 export async function signOutAction(locale: string) {
   try {
-    await signOut();
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     
-    // Clear any client-side cookies if needed
+    await fetch(`${baseURL}/api/v1/users/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    
+    // Clear cookies
     const cookieStore = await cookies();
-    // Note: httpOnly cookies are cleared by the backend
+    cookieStore.delete('laravel_session');
+    cookieStore.delete('XSRF-TOKEN');
     
-    redirect(`/${locale}/sign-in`);
   } catch (error) {
-    // Even if the API call fails, redirect to sign-in
-    redirect(`/${locale}/sign-in`);
+    console.error('[signOutAction] Error:', error);
   }
+  
+  redirect(`/${locale}/sign-in`);
 }
