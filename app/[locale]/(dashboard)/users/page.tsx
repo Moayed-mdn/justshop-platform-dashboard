@@ -41,22 +41,22 @@ export default function UsersPage() {
   });
 
   // Fetch users
-  const fetchUsers = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await usersEndpoints.getUsers(filters);
-      setUsers(response.data);
-      setMeta(response.meta);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
-
   React.useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const response = await usersEndpoints.getUsers(filters);
+        setUsers(response.data);
+        setMeta(response.meta);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUsers();
-  }, [fetchUsers]);
+  }, [filters.page, filters.per_page, filters.search, filters.role, filters.status, filters.sort, filters.order]);
 
   // Handle search
   const handleSearch = (search: string) => {
