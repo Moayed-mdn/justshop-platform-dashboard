@@ -12,64 +12,77 @@ export async function signInAction(credentials: SignInInput, locale: string) {
     
     // Step 1: Get CSRF cookie
     const csrfResponse = await fetch(`${baseURL}/sanctum/csrf-cookie`, {
-      credentials: 'include',
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
     });
     
     // Extract cookies from the response
     const setCookieHeaders = csrfResponse.headers.getSetCookie();
-    console.log('[signInAction] Step 2: Received cookies:', setCookieHeaders.length);
+    console.log('[signInAction] Step 2: Received', setCookieHeaders.length, 'Set-Cookie headers');
     
-    // Parse XSRF-TOKEN from Set-Cookie headers
+    // Parse XSRF-TOKEN and session cookie from Set-Cookie headers
     let xsrfToken = '';
-    let sessionCookie = '';
+    const allCookies: string[] = [];
     
     for (const setCookie of setCookieHeaders) {
+      // Extract the cookie name=value pair (before first semicolon)
+      const cookiePair = setCookie.split(';')[0];
+      allCookies.push(cookiePair);
+      
+      // Extract and decode XSRF-TOKEN specifically
       if (setCookie.includes('XSRF-TOKEN=')) {
         const match = setCookie.match(/XSRF-TOKEN=([^;]+)/);
         if (match) {
           xsrfToken = decodeURIComponent(match[1]);
+          console.log('[signInAction] Step 3: XSRF Token extracted (first 20 chars):', xsrfToken.substring(0, 20) + '...');
         }
-      }
-      if (setCookie.includes('laravel_session=')) {
-        sessionCookie = setCookie.split(';')[0];
       }
     }
     
-    console.log('[signInAction] Step 3: XSRF Token found:', !!xsrfToken);
+    const cookieHeader = allCookies.join('; ');
+    console.log('[signInAction] Step 4: Cookie header prepared with', allCookies.length, 'cookies');
     
-    if (!xsrfToken) {
+    if (!xsrfToken || allCookies.length === 0) {
       return {
         success: false,
         message: 'common.error',
-        debug: 'Failed to get CSRF token from backend',
+        debug: `Failed to get CSRF token from backend. Found ${allCookies.length} cookies, XSRF token: ${!!xsrfToken}`,
       };
     }
     
-    // Step 2: Make login request with CSRF token
-    console.log('[signInAction] Step 4: Attempting login to:', `${baseURL}/api/v1/users/auth/login`);
+    // Step 2: Make login request with CSRF token and cookies
+    const loginEndpoint = `${baseURL}/api/v1/platform/auth/login`;
+    console.log('[signInAction] Step 5: Attempting login to:', loginEndpoint);
+    console.log('[signInAction] Step 6: Using XSRF token and', allCookies.length, 'cookies');
     
-    const loginResponse = await fetch(`${baseURL}/api/v1/users/auth/login`, {
+    const loginResponse = await fetch(loginEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-XSRF-TOKEN': xsrfToken,
-        'Cookie': sessionCookie,
+        'Cookie': cookieHeader,
       },
-      credentials: 'include',
       body: JSON.stringify(credentials),
     });
     
     const data = await loginResponse.json();
-    console.log('[signInAction] Step 5: Login response:', { status: loginResponse.status, success: data.success });
+    console.log('[signInAction] Step 7: Login response:', { 
+      status: loginResponse.status, 
+      success: data.success,
+      hasData: !!data.data,
+    });
     
     if (!loginResponse.ok) {
+      const errorCode = data.code || `HTTP_${loginResponse.status}`;
       return {
         success: false,
         message: data.code === 'AUTH_INVALID_CREDENTIALS' 
           ? 'auth.invalidCredentials' 
           : 'common.error',
-        debug: `API Error: ${data.message} (${data.code})`,
+        debug: `API Error: ${data.message || loginResponse.statusText} (${errorCode})`,
       };
     }
     
@@ -79,8 +92,10 @@ export async function signInAction(credentials: SignInInput, locale: string) {
       
       // Forward Laravel cookies to the browser
       const authCookies = loginResponse.headers.getSetCookie();
+      console.log('[signInAction] Step 8: Setting', authCookies.length, 'cookies from login response');
+      
       for (const setCookie of authCookies) {
-        const [cookiePair, ...attributes] = setCookie.split(';');
+        const [cookiePair] = setCookie.split(';');
         const [name, value] = cookiePair.split('=');
         
         if (name && value) {
@@ -92,10 +107,11 @@ export async function signInAction(credentials: SignInInput, locale: string) {
             sameSite: 'lax',
             path: '/',
           });
+          console.log('[signInAction] Set cookie:', name.trim());
         }
       }
       
-      console.log('[signInAction] Step 6: Redirecting to dashboard');
+      console.log('[signInAction] Step 9: Authentication successful, redirecting to dashboard');
       
       // Redirect to dashboard
       redirect(`/${locale}`);
@@ -104,6 +120,7 @@ export async function signInAction(credentials: SignInInput, locale: string) {
     return {
       success: false,
       message: 'auth.invalidCredentials',
+      debug: 'Login response success was false',
     };
   } catch (error) {
     console.error('[signInAction] Error:', error);
@@ -132,15 +149,27 @@ export async function signInAction(credentials: SignInInput, locale: string) {
 export async function signOutAction(locale: string) {
   try {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const cookieStore = await cookies();
     
-    await fetch(`${baseURL}/api/v1/users/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    // Get cookies to send with logout request
+    const xsrfToken = cookieStore.get('XSRF-TOKEN')?.value;
+    const sessionCookie = cookieStore.get('ecommerce_session')?.value;
+    
+    if (xsrfToken && sessionCookie) {
+      const cookieHeader = `XSRF-TOKEN=${xsrfToken}; ecommerce_session=${sessionCookie}`;
+      
+      await fetch(`${baseURL}/api/v1/platform/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
+          'Cookie': cookieHeader,
+        },
+      });
+    }
     
     // Clear cookies
-    const cookieStore = await cookies();
-    cookieStore.delete('laravel_session');
+    cookieStore.delete('ecommerce_session');
     cookieStore.delete('XSRF-TOKEN');
     
   } catch (error) {
