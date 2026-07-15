@@ -132,10 +132,30 @@ export default function CMSPage() {
             Manage blog posts, pages, and documentation
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Content
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Content
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Select Content Type</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => alert('Create Blog Post - Coming soon!')}>
+              <FileText className="mr-2 h-4 w-4" />
+              Blog Post
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => alert('Create Page - Coming soon!')}>
+              <File className="mr-2 h-4 w-4" />
+              Page
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => alert('Create Documentation - Coming soon!')}>
+              <BookOpen className="mr-2 h-4 w-4" />
+              Documentation
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Stats Cards */}
@@ -263,11 +283,11 @@ export default function CMSPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => alert(`View blog post: ${post.title}`)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => alert(`Edit blog post: ${post.title}`)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
@@ -285,7 +305,11 @@ export default function CMSPage() {
                 ))}
               </div>
               <div className="mt-4">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => alert('Full blog list page - Coming soon! This will show all blog posts with full search, filter, and pagination.')}
+                >
                   View All Blog Posts
                 </Button>
               </div>
@@ -332,11 +356,11 @@ export default function CMSPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => alert(`View page: ${page.title}`)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => alert(`Edit page: ${page.title}`)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
@@ -354,7 +378,11 @@ export default function CMSPage() {
                 ))}
               </div>
               <div className="mt-4">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => alert('Full pages list - Coming soon! This will show all pages with full management capabilities.')}
+                >
                   View All Pages
                 </Button>
               </div>
@@ -403,11 +431,11 @@ export default function CMSPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => alert(`View documentation: ${doc.title}`)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => alert(`Edit documentation: ${doc.title}`)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
@@ -425,7 +453,11 @@ export default function CMSPage() {
                 ))}
               </div>
               <div className="mt-4">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => alert('Full documentation list - Coming soon! This will show all docs with search and category filters.')}
+                >
                   View All Documentation
                 </Button>
               </div>
