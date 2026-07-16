@@ -247,7 +247,7 @@ export default function UserDetailPage() {
               <Shield className="h-5 w-5 text-muted-foreground" />
               <div>
                 <div className="text-sm text-muted-foreground">Role</div>
-                <div className="font-medium">{user.role.replace('_', ' ')}</div>
+                <div className="font-medium">{user.role ? user.role.replace('_', ' ') : 'N/A'}</div>
               </div>
             </div>
 
