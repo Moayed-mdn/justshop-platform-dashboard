@@ -53,6 +53,7 @@ export default function UsersPage() {
     const fetchUsers = async () => {
       setLoading(true);
       try {
+        console.log('[Users Page] Fetching with filters:', filters);
         const response = await usersEndpoints.getUsers(filters);
         setUsers(response.data);
         setMeta(response.meta);
@@ -64,7 +65,7 @@ export default function UsersPage() {
     };
 
     fetchUsers();
-  }, [filters.page, filters.per_page, filters.search, filters.role, filters.status, filters.sort, filters.order]);
+  }, [filters]);
 
   // Handle search
   const handleSearch = (search: string) => {
@@ -87,6 +88,7 @@ export default function UsersPage() {
 
   // Handle page change
   const handlePageChange = (page: number) => {
+    console.log('[Users Page] Page change requested:', page);
     setFilters((prev) => ({ ...prev, page }));
   };
 

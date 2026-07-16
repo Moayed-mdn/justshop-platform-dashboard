@@ -6,7 +6,9 @@ export class ApiClient {
   private csrfToken: string | null = null;
 
   constructor(baseURL?: string) {
-    this.baseURL = baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    // If baseURL is empty or not provided, use empty string (relative URLs through Next.js proxy)
+    // Otherwise use the provided URL (e.g., http://localhost:8000 for direct backend access)
+    this.baseURL = baseURL !== undefined ? baseURL : (process.env.NEXT_PUBLIC_API_URL || '');
   }
 
   /**
@@ -18,8 +20,8 @@ export class ApiClient {
     }
 
     try {
-      // Laravel Sanctum CSRF cookie endpoint
-      await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
+      // Laravel Sanctum CSRF cookie endpoint (through Next.js proxy)
+      await fetch(`${this.baseURL}/api/sanctum/csrf-cookie`, {
         credentials: 'include',
       });
       

@@ -99,7 +99,8 @@ export default function AuditLogsPage() {
   };
 
   // Get initials
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '??';
     return name
       .split(' ')
       .map((n) => n[0])
