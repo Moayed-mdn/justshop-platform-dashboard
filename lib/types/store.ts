@@ -1,20 +1,26 @@
 export type StoreStatus = 'active' | 'suspended' | 'pending' | 'inactive';
 
+export interface StoreOwner {
+  id: number;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
 export interface Store {
   id: number;
   name: string;
   domain: string;
-  subdomain: string;
+  subdomain?: string;
   logo?: string;
+  slug?: string;
   status: StoreStatus;
-  owner_id: number;
-  owner_name: string;
-  owner_email: string;
-  owner_avatar?: string;
-  theme: string;
-  products_count: number;
-  orders_count: number;
-  customers_count: number;
+  owner: StoreOwner | null;
+  theme?: string;
+  products_count?: number;
+  orders_count?: number;
+  customers_count?: number;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }

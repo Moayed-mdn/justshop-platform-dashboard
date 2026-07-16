@@ -243,15 +243,15 @@ export default function StoreDetailPage() {
         <CardContent>
           <div className="flex items-center gap-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={store.owner_avatar} alt={store.owner_name} />
-              <AvatarFallback>{getInitials(store.owner_name)}</AvatarFallback>
+              <AvatarImage src={store.owner?.avatar} alt={store.owner?.name} />
+              <AvatarFallback>{getInitials(store.owner?.name)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{store.owner_name}</div>
-              <div className="text-sm text-muted-foreground">{store.owner_email}</div>
+              <div className="font-medium">{store.owner?.name ?? 'No owner'}</div>
+              <div className="text-sm text-muted-foreground">{store.owner?.email ?? 'N/A'}</div>
             </div>
             <Button variant="outline" size="sm" className="ml-auto" asChild>
-              <Link href={`/${locale}/users/${store.owner_id}`}>
+              <Link href={`/${locale}/users/${store.owner?.id ?? ''}`}>
                 <User className="mr-2 h-4 w-4" />
                 View Profile
               </Link>
