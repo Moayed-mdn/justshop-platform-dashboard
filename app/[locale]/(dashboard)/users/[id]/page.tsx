@@ -348,31 +348,36 @@ export default function UserDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {user.recent_activity.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start gap-3 pb-4 last:pb-0 border-b last:border-0"
-              >
-                <div className="rounded-full bg-muted p-2">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">{activity.action.replace('_', ' ')}</div>
+            {(user.recent_activity ?? []).length > 0 ? (
+              user.recent_activity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-start gap-3 pb-4 last:pb-0 border-b last:border-0"
+                >
+                  <div className="rounded-full bg-muted p-2">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{activity.action.replace('_', ' ')}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {activity.description}
+                    </div>
+                  </div>
                   <div className="text-sm text-muted-foreground">
-                    {activity.description}
+                    {formatDistanceToNow(new Date(activity.created_at), {
+                      addSuffix: true,
+                    })}
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(activity.created_at), {
-                    addSuffix: true,
-                  })}
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No recent activity
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
-
       {/* Stores */}
       {user.stores.length > 0 && (
         <Card>
