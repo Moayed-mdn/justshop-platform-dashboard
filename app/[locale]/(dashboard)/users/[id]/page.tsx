@@ -31,11 +31,24 @@ export default function UserDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
-  const userId = Number(params.id);
+  
+  // In Next.js 15, params might be a Promise in some contexts
+  // Extract id and convert to number
+  const [userId, setUserId] = React.useState<number | null>(null);
 
   const [user, setUser] = React.useState<UserDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+
+  // Extract user ID from params
+  React.useEffect(() => {
+    const extractId = async () => {
+      const resolvedParams = await Promise.resolve(params);
+      const id = Number(resolvedParams.id);
+      setUserId(id);
+    };
+    extractId();
+  }, [params]);
 
   // Check if edit query param is present
   React.useEffect(() => {
@@ -46,6 +59,8 @@ export default function UserDetailPage() {
 
   // Fetch user
   React.useEffect(() => {
+    if (userId === null || isNaN(userId)) return;
+    
     const fetchUser = async () => {
       setLoading(true);
       try {

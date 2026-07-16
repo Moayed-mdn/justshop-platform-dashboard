@@ -55,8 +55,9 @@ export const storesEndpoints = {
    * Suspend store
    */
   async suspendStore(id: number): Promise<Store> {
-    const response = await apiClient.post<Store>(
-      `/api/v1/platform/stores/${id}/suspend`
+    const response = await apiClient.request<{ success: boolean; message: string; data: Store }>(
+      `/api/v1/platform/stores/${id}/suspend`,
+      { method: 'PATCH' }
     );
     
     return response.data;
@@ -66,8 +67,9 @@ export const storesEndpoints = {
    * Activate store
    */
   async activateStore(id: number): Promise<Store> {
-    const response = await apiClient.post<Store>(
-      `/api/v1/platform/stores/${id}/activate`
+    const response = await apiClient.request<{ success: boolean; message: string; data: Store }>(
+      `/api/v1/platform/stores/${id}/activate`,
+      { method: 'PATCH' }
     );
     
     return response.data;

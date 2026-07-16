@@ -54,8 +54,9 @@ export const usersEndpoints = {
    * Suspend user
    */
   async suspendUser(id: number): Promise<User> {
-    const response = await apiClient.post<User>(
-      `/api/v1/platform/users/${id}/suspend`
+    const response = await apiClient.request<{ success: boolean; message: string; data: User }>(
+      `/api/v1/platform/users/${id}/suspend`,
+      { method: 'PATCH' }
     );
     
     return response.data;
@@ -65,8 +66,9 @@ export const usersEndpoints = {
    * Activate user
    */
   async activateUser(id: number): Promise<User> {
-    const response = await apiClient.post<User>(
-      `/api/v1/platform/users/${id}/activate`
+    const response = await apiClient.request<{ success: boolean; message: string; data: User }>(
+      `/api/v1/platform/users/${id}/activate`,
+      { method: 'PATCH' }
     );
     
     return response.data;

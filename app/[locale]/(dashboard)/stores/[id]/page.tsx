@@ -34,13 +34,27 @@ export default function StoreDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
-  const storeId = Number(params.id);
+  
+  // Extract store ID from params
+  const [storeId, setStoreId] = React.useState<number | null>(null);
 
   const [store, setStore] = React.useState<StoreDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
 
+  // Extract store ID from params
+  React.useEffect(() => {
+    const extractId = async () => {
+      const resolvedParams = await Promise.resolve(params);
+      const id = Number(resolvedParams.id);
+      setStoreId(id);
+    };
+    extractId();
+  }, [params]);
+
   // Fetch store
   React.useEffect(() => {
+    if (storeId === null || isNaN(storeId)) return;
+    
     const fetchStore = async () => {
       setLoading(true);
       try {
@@ -186,7 +200,10 @@ export default function StoreDetailPage() {
               Visit
             </a>
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            // TODO: Implement edit store functionality
+            alert('Edit store functionality coming soon');
+          }}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
@@ -364,32 +381,38 @@ export default function StoreDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {store.recent_orders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between pb-4 last:pb-0 border-b last:border-0"
-              >
-                <div className="flex items-center gap-4">
-                  <div>
-                    <div className="font-medium">{order.order_number}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {order.customer_name} • {order.items_count} items
+            {(store.recent_orders ?? []).length > 0 ? (
+              store.recent_orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between pb-4 last:pb-0 border-b last:border-0"
+                >
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <div className="font-medium">{order.order_number}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {order.customer_name} • {order.items_count} items
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="font-medium">${order.amount.toFixed(2)}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="font-medium">${order.amount.toFixed(2)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                      </div>
                     </div>
+                    <Badge variant={getStatusVariant(order.status)}>
+                      {order.status}
+                    </Badge>
                   </div>
-                  <Badge variant={getStatusVariant(order.status)}>
-                    {order.status}
-                  </Badge>
-                </div>
               </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No recent orders
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
