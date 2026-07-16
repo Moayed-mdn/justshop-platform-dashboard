@@ -316,11 +316,11 @@ export default function StoreDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">Orders</div>
-                <div className="text-2xl font-bold">{store.stats.orders_this_month}</div>
+                <div className="text-2xl font-bold">{store.stats?.orders_this_month ?? 0}</div>
               </div>
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">Revenue</div>
-                <div className="text-2xl font-bold">${store.stats.revenue_this_month.toLocaleString()}</div>
+                <div className="text-2xl font-bold">${(store.stats?.revenue_this_month ?? 0).toLocaleString()}</div>
               </div>
             </div>
           </CardContent>
@@ -334,22 +334,22 @@ export default function StoreDetailPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Currency</span>
-                <span className="font-medium">{store.settings.currency}</span>
+                <span className="font-medium">{store.settings?.currency ?? 'USD'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Language</span>
-                <span className="font-medium">{store.settings.language.toUpperCase()}</span>
+                <span className="font-medium">{store.settings?.language?.toUpperCase() ?? 'EN'}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Tax Enabled</span>
-                <Badge variant={store.settings.tax_enabled ? 'success' : 'secondary'}>
-                  {store.settings.tax_enabled ? 'Yes' : 'No'}
+                <Badge variant={store.settings?.tax_enabled ? 'success' : 'secondary'}>
+                  {store.settings?.tax_enabled ? 'Yes' : 'No'}
                 </Badge>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
-                <Badge variant={store.settings.shipping_enabled ? 'success' : 'secondary'}>
-                  {store.settings.shipping_enabled ? 'Enabled' : 'Disabled'}
+                <Badge variant={store.settings?.shipping_enabled ? 'success' : 'secondary'}>
+                  {store.settings?.shipping_enabled ? 'Enabled' : 'Disabled'}
                 </Badge>
               </div>
             </div>
