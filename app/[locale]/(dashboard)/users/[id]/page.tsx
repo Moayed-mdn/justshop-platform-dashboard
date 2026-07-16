@@ -251,7 +251,7 @@ export default function UserDetailPage() {
               <div>
                 <div className="text-sm text-muted-foreground">Last Login</div>
                 <div className="font-medium">
-                  {user.stats.last_login
+                  {user.stats?.last_login
                     ? formatDistanceToNow(new Date(user.stats.last_login), {
                         addSuffix: true,
                       })

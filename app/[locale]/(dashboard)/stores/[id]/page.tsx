@@ -252,7 +252,7 @@ export default function StoreDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  {store.stats.total_products}
+                  {store.stats?.total_products ?? 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Products</div>
               </div>
@@ -268,7 +268,7 @@ export default function StoreDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  ${store.stats.total_revenue.toLocaleString()}
+                  ${(store.stats?.total_revenue ?? 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Revenue</div>
               </div>
@@ -283,7 +283,7 @@ export default function StoreDetailPage() {
                 <ShoppingCart className="h-6 w-6 text-purple-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{store.stats.total_orders}</div>
+                <div className="text-2xl font-bold">{store.stats?.total_orders ?? 0}</div>
                 <div className="text-sm text-muted-foreground">Total Orders</div>
               </div>
             </div>
@@ -297,7 +297,7 @@ export default function StoreDetailPage() {
                 <Users className="h-6 w-6 text-orange-500" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{store.stats.total_customers}</div>
+                <div className="text-2xl font-bold">{store.stats?.total_customers ?? 0}</div>
                 <div className="text-sm text-muted-foreground">Total Customers</div>
               </div>
             </div>

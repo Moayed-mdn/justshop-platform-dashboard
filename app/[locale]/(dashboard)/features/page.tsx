@@ -179,7 +179,7 @@ export default function FeatureFlagsPage() {
       sortable: true,
       className: 'text-right',
       render: (flag) => (
-        <span className="text-sm">{flag.usage_count.toLocaleString()}</span>
+        <span className="text-sm">{(flag.usage_count ?? 0).toLocaleString()}</span>
       ),
     },
     {
