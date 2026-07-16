@@ -379,10 +379,10 @@ export default function UserDetailPage() {
         </CardContent>
       </Card>
       {/* Stores */}
-      {user.stores.length > 0 && (
+      {(user.stores ?? []).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Stores ({user.stores.length})</CardTitle>
+            <CardTitle>Stores ({user.stores?.length ?? 0})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
