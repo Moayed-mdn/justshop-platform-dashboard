@@ -43,7 +43,9 @@ export default function FeatureFlagsPage() {
       try {
         const response = await featureFlagsEndpoints.getFeatureFlags(filters);
         setFlags(response.data);
-        setMeta(response.meta);
+        if (response.meta) {
+          setMeta(response.meta);
+        }
       } catch (error) {
         console.error('Failed to fetch feature flags:', error);
       } finally {
@@ -55,9 +57,9 @@ export default function FeatureFlagsPage() {
   }, [filters.page, filters.per_page, filters.search, filters.status, filters.environment, filters.target_type]);
 
   // Handle search
-  const handleSearch = (search: string) => {
+  const handleSearch = React.useCallback((search: string) => {
     setFilters((prev) => ({ ...prev, search, page: 1 }));
-  };
+  }, []);
 
   // Handle filter change
   const handleFilterChange = (key: keyof FeatureFlagFilters, value: any) => {

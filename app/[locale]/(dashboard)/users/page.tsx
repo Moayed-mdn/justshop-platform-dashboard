@@ -56,7 +56,9 @@ export default function UsersPage() {
         console.log('[Users Page] Fetching with filters:', filters);
         const response = await usersEndpoints.getUsers(filters);
         setUsers(response.data);
-        setMeta(response.meta);
+        if (response.meta) {
+          setMeta(response.meta);
+        }
       } catch (error) {
         console.error('Failed to fetch users:', error);
       } finally {
@@ -68,9 +70,9 @@ export default function UsersPage() {
   }, [filters]);
 
   // Handle search
-  const handleSearch = (search: string) => {
+  const handleSearch = React.useCallback((search: string) => {
     setFilters((prev) => ({ ...prev, search, page: 1 }));
-  };
+  }, []);
 
   // Handle filter change
   const handleFilterChange = (key: keyof UserFilters, value: any) => {
@@ -185,7 +187,7 @@ export default function UsersPage() {
       sortable: true,
       render: (user) => (
         <Badge variant={getRoleVariant(user.role)}>
-          {user.role.replace('_', ' ')}
+          {user.role ? user.role.replace('_', ' ') : 'N/A'}
         </Badge>
       ),
     },

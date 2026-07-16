@@ -62,7 +62,9 @@ export default function AuditLogsPage() {
       try {
         const response = await auditEndpoints.getAuditLogs(filters);
         setLogs(response.data);
-        setMeta(response.meta);
+        if (response.meta) {
+          setMeta(response.meta);
+        }
       } catch (error) {
         console.error('Failed to fetch audit logs:', error);
       } finally {
@@ -74,9 +76,9 @@ export default function AuditLogsPage() {
   }, [filters.page, filters.per_page, filters.search, filters.action, filters.resource_type, filters.user_id]);
 
   // Handle search
-  const handleSearch = (search: string) => {
+  const handleSearch = React.useCallback((search: string) => {
     setFilters((prev) => ({ ...prev, search, page: 1 }));
-  };
+  }, []);
 
   // Handle filter change
   const handleFilterChange = (key: keyof AuditFilters, value: any) => {

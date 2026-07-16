@@ -63,7 +63,9 @@ export default function StoresPage() {
       try {
         const response = await storesEndpoints.getStores(filters);
         setStores(response.data);
-        setMeta(response.meta);
+        if (response.meta) {
+          setMeta(response.meta);
+        }
       } catch (error) {
         console.error('Failed to fetch stores:', error);
       } finally {
@@ -75,9 +77,9 @@ export default function StoresPage() {
   }, [filters.page, filters.per_page, filters.search, filters.status, filters.owner_id, filters.sort, filters.order]);
 
   // Handle search
-  const handleSearch = (search: string) => {
+  const handleSearch = React.useCallback((search: string) => {
     setFilters((prev) => ({ ...prev, search, page: 1 }));
-  };
+  }, []);
 
   // Handle filter change
   const handleFilterChange = (key: keyof StoreFilters, value: any) => {
@@ -129,7 +131,8 @@ export default function StoresPage() {
   };
 
   // Get initials
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '??';
     return name
       .split(' ')
       .map((n) => n[0])
