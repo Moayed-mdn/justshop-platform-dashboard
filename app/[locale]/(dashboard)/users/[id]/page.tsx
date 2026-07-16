@@ -160,7 +160,7 @@ export default function UserDetailPage() {
               <Badge variant={getStatusVariant(user.status)}>
                 {user.status}
               </Badge>
-              <Badge variant="info">{user.role.replace('_', ' ')}</Badge>
+              <Badge variant="info">{user.role ? user.role.replace('_', ' ') : 'N/A'}</Badge>
               {user.email_verified && (
                 <Badge variant="success">Email Verified</Badge>
               )}
