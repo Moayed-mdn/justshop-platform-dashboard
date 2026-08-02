@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocale } from 'next-intl';
 import { 
   Eye, 
@@ -14,6 +15,7 @@ import {
   Settings 
 } from 'lucide-react';
 import { storesEndpoints } from '@/lib/api/endpoints/stores';
+import type { PaginatedResponse } from '@/lib/types/user';
 import type { Store, StoreFilters } from '@/lib/types/store';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
@@ -40,41 +42,27 @@ import { formatDistanceToNow } from 'date-fns';
 
 export default function StoresPage() {
   const locale = useLocale();
+  const queryClient = useQueryClient();
 
-  const [stores, setStores] = React.useState<Store[]>([]);
-  const [loading, setLoading] = React.useState(true);
   const [filters, setFilters] = React.useState<StoreFilters>({
     page: 1,
     per_page: 20,
     sort: 'created_at',
     order: 'desc',
   });
-  const [meta, setMeta] = React.useState({
+  const storesQueryKey = React.useMemo(() => ['platform-stores', filters] as const, [filters]);
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: storesQueryKey,
+    queryFn: () => storesEndpoints.getStores(filters),
+    placeholderData: keepPreviousData,
+  });
+  const stores = data?.data ?? [];
+  const meta = data?.meta ?? {
     current_page: 1,
     total: 0,
-    per_page: 20,
+    per_page: filters.per_page ?? 20,
     last_page: 1,
-  });
-
-  // Fetch stores
-  React.useEffect(() => {
-    const fetchStores = async () => {
-      setLoading(true);
-      try {
-        const response = await storesEndpoints.getStores(filters);
-        setStores(response.data);
-        if (response.meta) {
-          setMeta(response.meta);
-        }
-      } catch (error) {
-        console.error('Failed to fetch stores:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStores();
-  }, [filters.page, filters.per_page, filters.search, filters.status, filters.owner_id, filters.sort, filters.order]);
+  };
 
   // Handle search
   const handleSearch = React.useCallback((search: string) => {
@@ -82,7 +70,10 @@ export default function StoresPage() {
   }, []);
 
   // Handle filter change
-  const handleFilterChange = (key: keyof StoreFilters, value: any) => {
+  const handleFilterChange = (
+    key: keyof StoreFilters,
+    value: StoreFilters[keyof StoreFilters]
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
@@ -108,10 +99,15 @@ export default function StoresPage() {
           ? await storesEndpoints.suspendStore(storeId)
           : await storesEndpoints.activateStore(storeId);
 
-      // Update the store in the list
-      setStores((prev) =>
-        prev.map((s) => (s.id === storeId ? { ...s, status: updatedStore.status } : s))
-      );
+      queryClient.setQueryData<PaginatedResponse<Store>>(storesQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          data: current.data.map((s) =>
+            s.id === storeId ? { ...s, status: updatedStore.status } : s
+          ),
+        };
+      });
     } catch (error) {
       console.error('Failed to update store status:', error);
     }
@@ -123,8 +119,16 @@ export default function StoresPage() {
 
     try {
       await storesEndpoints.deleteStore(storeId);
-      // Remove store from list
-      setStores((prev) => prev.filter((s) => s.id !== storeId));
+      queryClient.setQueryData<PaginatedResponse<Store>>(storesQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          data: current.data.filter((s) => s.id !== storeId),
+          meta: {
+            ...current.meta,
+            total: Math.max(0, current.meta.total - 1),
+          },
+        };
+      });
     } catch (error) {
       console.error('Failed to delete store:', error);
     }
@@ -183,12 +187,14 @@ export default function StoresPage() {
       render: (store) => (
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={store.owner_avatar} alt={store.owner_name} />
-            <AvatarFallback className="text-xs">{getInitials(store.owner_name)}</AvatarFallback>
+            <AvatarImage src={store.owner?.avatar} alt={store.owner?.name} />
+            <AvatarFallback className="text-xs">
+              {getInitials(store.owner?.name)}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-sm font-medium">{store.owner_name}</div>
-            <div className="text-xs text-muted-foreground">{store.owner_email}</div>
+            <div className="text-sm font-medium">{store.owner?.name ?? 'Unassigned'}</div>
+            <div className="text-xs text-muted-foreground">{store.owner?.email ?? '-'}</div>
           </div>
         </div>
       ),
@@ -356,12 +362,15 @@ export default function StoresPage() {
       </div>
 
       {/* Table */}
-      {loading ? (
+      {isLoading && stores.length === 0 ? (
         <div className="rounded-md border p-8 text-center">
           <div className="text-muted-foreground">Loading stores...</div>
         </div>
       ) : (
         <>
+          {isFetching && (
+            <div className="text-sm text-muted-foreground">Refreshing stores...</div>
+          )}
           <DataTable
             columns={columns}
             data={stores}
