@@ -21,7 +21,7 @@ export class ApiClient {
 
     try {
       // Laravel Sanctum CSRF cookie endpoint (through Next.js proxy)
-      await fetch(`${this.baseURL}/api/sanctum/csrf-cookie`, {
+      await fetch(`${this.baseURL}/sanctum/csrf-cookie`, {
         credentials: 'include',
       });
       

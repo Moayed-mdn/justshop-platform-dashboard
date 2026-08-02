@@ -63,6 +63,8 @@ async function proxyRequest(
 
     // Get cookies from the request
     const cookieHeader = request.headers.get('cookie');
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
     console.log(`[API Proxy] Forwarding cookies, length: ${cookieHeader?.length || 0}`);
 
     // Get request body for POST/PUT/PATCH
@@ -79,6 +81,8 @@ async function proxyRequest(
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
+        ...(origin && { 'Origin': origin }),
+        ...(referer && { 'Referer': referer }),
         ...(cookieHeader && { 'Cookie': cookieHeader }),
         // Forward XSRF token if present
         ...(request.headers.get('x-xsrf-token') && {
