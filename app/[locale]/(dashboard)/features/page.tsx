@@ -1,12 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useLocale } from 'next-intl';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { featureFlagsEndpoints } from '@/lib/api/endpoints/feature-flags';
 import type { FeatureFlag, FeatureFlagFilters } from '@/lib/types/feature-flag';
+import type { PaginatedResponse } from '@/lib/types/user';
 import { DataTable, type Column } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { SearchInput } from '@/components/ui/search-input';
 import { Pagination } from '@/components/ui/pagination';
 import { Button } from '@/components/ui/button';
@@ -20,41 +21,27 @@ import {
 } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 
-export default function FeatureFlagsPage() {
-  const locale = useLocale();
+const ALL_TARGETS = '__all_targets__';
 
-  const [flags, setFlags] = React.useState<FeatureFlag[]>([]);
-  const [loading, setLoading] = React.useState(true);
+export default function FeatureFlagsPage() {
+  const queryClient = useQueryClient();
   const [filters, setFilters] = React.useState<FeatureFlagFilters>({
     page: 1,
     per_page: 20,
   });
-  const [meta, setMeta] = React.useState({
+  const flagsQueryKey = React.useMemo(() => ['feature-flags', filters] as const, [filters]);
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: flagsQueryKey,
+    queryFn: () => featureFlagsEndpoints.getFeatureFlags(filters),
+    placeholderData: keepPreviousData,
+  });
+  const flags = data?.data ?? [];
+  const meta = data?.meta ?? {
     current_page: 1,
     total: 0,
-    per_page: 20,
+    per_page: filters.per_page ?? 20,
     last_page: 1,
-  });
-
-  // Fetch feature flags
-  React.useEffect(() => {
-    const fetchFlags = async () => {
-      setLoading(true);
-      try {
-        const response = await featureFlagsEndpoints.getFeatureFlags(filters);
-        setFlags(response.data);
-        if (response.meta) {
-          setMeta(response.meta);
-        }
-      } catch (error) {
-        console.error('Failed to fetch feature flags:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFlags();
-  }, [filters.page, filters.per_page, filters.search, filters.status, filters.environment, filters.target_type]);
+  };
 
   // Handle search
   const handleSearch = React.useCallback((search: string) => {
@@ -62,12 +49,15 @@ export default function FeatureFlagsPage() {
   }, []);
 
   // Handle filter change
-  const handleFilterChange = (key: keyof FeatureFlagFilters, value: any) => {
+  const handleFilterChange = (
+    key: keyof FeatureFlagFilters,
+    value: FeatureFlagFilters[keyof FeatureFlagFilters]
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
   // Handle sort
-  const handleSort = (key: string) => {
+  const handleSort = () => {
     // Sorting handled by API (currently just alphabetical)
   };
 
@@ -77,12 +67,18 @@ export default function FeatureFlagsPage() {
   };
 
   // Handle toggle
-  const handleToggle = async (flagId: number) => {
+  const handleToggle = async (flagId: number, enabled: boolean) => {
     try {
-      const updatedFlag = await featureFlagsEndpoints.toggleFeatureFlag(flagId);
-      setFlags((prev) =>
-        prev.map((f) => (f.id === flagId ? updatedFlag : f))
-      );
+      const updatedFlag = await featureFlagsEndpoints.toggleFeatureFlag(flagId, enabled);
+      queryClient.setQueryData<PaginatedResponse<FeatureFlag>>(flagsQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          data: current.data.map((f) =>
+            f.id === flagId ? { ...f, ...updatedFlag } : f
+          ),
+        };
+      });
     } catch (error) {
       console.error('Failed to toggle feature flag:', error);
     }
@@ -94,7 +90,16 @@ export default function FeatureFlagsPage() {
 
     try {
       await featureFlagsEndpoints.deleteFeatureFlag(flagId);
-      setFlags((prev) => prev.filter((f) => f.id !== flagId));
+      queryClient.setQueryData<PaginatedResponse<FeatureFlag>>(flagsQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          data: current.data.filter((f) => f.id !== flagId),
+          meta: {
+            ...current.meta,
+            total: Math.max(0, current.meta.total - 1),
+          },
+        };
+      });
     } catch (error) {
       console.error('Failed to delete feature flag:', error);
     }
@@ -122,7 +127,7 @@ export default function FeatureFlagsPage() {
 
   // Get environment badge
   const getEnvironmentBadge = (env: string) => {
-    const variants: Record<string, any> = {
+    const variants: Record<string, BadgeProps['variant']> = {
       all: 'default',
       production: 'destructive',
       staging: 'warning',
@@ -139,7 +144,7 @@ export default function FeatureFlagsPage() {
       render: (flag) => (
         <Switch
           checked={flag.enabled}
-          onCheckedChange={() => handleToggle(flag.id)}
+          onCheckedChange={(checked) => handleToggle(flag.id, checked)}
         />
       ),
     },
@@ -267,16 +272,16 @@ export default function FeatureFlagsPage() {
           </Select>
 
           <Select
-            value={filters.target_type || 'all'}
+            value={filters.target_type || ALL_TARGETS}
             onValueChange={(value) =>
-              handleFilterChange('target_type', value === 'all' ? undefined : value)
+              handleFilterChange('target_type', value === ALL_TARGETS ? undefined : value)
             }
           >
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="All Targets" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Targets</SelectItem>
+              <SelectItem value={ALL_TARGETS}>All Targets</SelectItem>
               <SelectItem value="all">All Users</SelectItem>
               <SelectItem value="percentage">Percentage</SelectItem>
               <SelectItem value="users">Specific Users</SelectItem>
@@ -287,17 +292,20 @@ export default function FeatureFlagsPage() {
       </div>
 
       {/* Table */}
-      {loading ? (
+      {isLoading && flags.length === 0 ? (
         <div className="rounded-md border p-8 text-center">
           <div className="text-muted-foreground">Loading feature flags...</div>
         </div>
       ) : (
         <>
+          {isFetching && (
+            <div className="text-sm text-muted-foreground">Refreshing feature flags...</div>
+          )}
           <DataTable
             columns={columns}
             data={flags}
             keyExtractor={(flag) => flag.id}
-            onSort={handleSort}
+            onSort={() => handleSort()}
             emptyMessage="No feature flags found"
           />
 

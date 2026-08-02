@@ -2,6 +2,12 @@ import { apiClient } from '../client';
 import type { PaginatedResponse } from '@/lib/types/user';
 import type { FeatureFlag, FeatureFlagFilters } from '@/lib/types/feature-flag';
 
+type FeatureFlagsListResponse = {
+  success: boolean;
+  data: FeatureFlag[];
+  meta: PaginatedResponse<FeatureFlag>['meta'];
+};
+
 export const featureFlagsEndpoints = {
   /**
    * Get feature flags
@@ -17,9 +23,9 @@ export const featureFlagsEndpoints = {
     if (filters?.target_type) params.append('target_type', filters.target_type);
 
     // Backend returns: { success, data: FeatureFlag[], meta: {...} }
-    const response: any = await apiClient.get(
+    const response = await apiClient.get<FeatureFlagsListResponse['data']>(
       `/api/v1/platform/features?${params.toString()}`
-    );
+    ) as unknown as FeatureFlagsListResponse;
 
     return {
       data: response.data,
@@ -41,12 +47,24 @@ export const featureFlagsEndpoints = {
   /**
    * Toggle feature flag
    */
-  async toggleFeatureFlag(id: number): Promise<FeatureFlag> {
-    const response = await apiClient.post<FeatureFlag>(
-      `/api/v1/platform/feature-flags/${id}/toggle`
+  async toggleFeatureFlag(
+    id: number,
+    enabled: boolean
+  ): Promise<Partial<FeatureFlag> & Pick<FeatureFlag, 'id' | 'enabled' | 'updated_at'>> {
+    const response = await apiClient.request<Partial<FeatureFlag>>(
+      `/api/v1/platform/features/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }
     );
-    
-    return response.data;
+
+    return {
+      ...response.data,
+      id,
+      enabled,
+      updated_at: response.data.updated_at ?? new Date().toISOString(),
+    };
   },
 
   /**
@@ -65,9 +83,12 @@ export const featureFlagsEndpoints = {
    * Update feature flag
    */
   async updateFeatureFlag(id: number, data: Partial<FeatureFlag>): Promise<FeatureFlag> {
-    const response = await apiClient.put<FeatureFlag>(
-      `/api/v1/platform/feature-flags/${id}`,
-      data
+    const response = await apiClient.request<FeatureFlag>(
+      `/api/v1/platform/features/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
     );
     
     return response.data;
