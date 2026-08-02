@@ -88,3 +88,27 @@
 body {
   font-family: var(--font-inter), system-ui, sans-serif;
 }
+
+
+/* Fix: Prevent Radix Select from blocking body scroll */
+body:has([data-dashboard-select-content][data-state="open"]) {
+  overflow: auto !important;
+  pointer-events: auto !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Force body to always be scrollable, even when modals/selects are open */
+body {
+  overflow-y: scroll !important;
+}
+
+/* Allow clicking outside select while keeping dropdown functional */
+[data-dashboard-select-content] {
+  pointer-events: auto !important;
+}
+
+/* Prevent any component from setting overflow:hidden on body */
+body[style*="overflow: hidden"] {
+  overflow: auto !important;
+}
