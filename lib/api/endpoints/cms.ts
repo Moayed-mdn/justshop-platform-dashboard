@@ -8,6 +8,11 @@ import type {
   ContentFilters
 } from '@/lib/types/cms';
 
+type PaginatedApiListResponse<T> = {
+  data: T[];
+  meta: PaginatedResponse<T>['meta'];
+};
+
 export const cmsEndpoints = {
   /**
    * Get CMS statistics
@@ -33,9 +38,9 @@ export const cmsEndpoints = {
     if (filters?.category) params.append('category', filters.category);
 
     // Backend returns: { success, data: BlogPost[], meta: {...} }
-    const response: any = await apiClient.get(
+    const response = (await apiClient.get<BlogPost[]>(
       `/api/v1/platform/cms/blog?${params.toString()}`
-    );
+    )) as unknown as PaginatedApiListResponse<BlogPost>;
 
     return {
       data: response.data,
@@ -64,11 +69,12 @@ export const cmsEndpoints = {
     if (filters?.per_page) params.append('per_page', filters.per_page.toString());
     if (filters?.search) params.append('search', filters.search);
     if (filters?.status) params.append('status', filters.status);
+    if (filters?.type) params.append('type', filters.type);
 
     // Backend returns: { success, data: Page[], meta: {...} }
-    const response: any = await apiClient.get(
+    const response = (await apiClient.get<Page[]>(
       `/api/v1/platform/cms/pages?${params.toString()}`
-    );
+    )) as unknown as PaginatedApiListResponse<Page>;
 
     return {
       data: response.data,
@@ -89,9 +95,9 @@ export const cmsEndpoints = {
     if (filters?.category) params.append('category', filters.category);
 
     // Backend returns: { success, data: Documentation[], meta: {...} }
-    const response: any = await apiClient.get(
+    const response = (await apiClient.get<Documentation[]>(
       `/api/v1/platform/cms/docs?${params.toString()}`
-    );
+    )) as unknown as PaginatedApiListResponse<Documentation>;
 
     return {
       data: response.data,
@@ -104,6 +110,48 @@ export const cmsEndpoints = {
    */
   async deleteBlogPost(id: number): Promise<void> {
     await apiClient.delete(`/api/v1/platform/cms/blog/${id}`);
+  },
+
+  /**
+   * Get single page
+   */
+  async getPage(id: number): Promise<Page> {
+    const response = await apiClient.get<{ data: Page }>(
+      `/api/v1/platform/cms/pages/${id}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Create a new page
+   */
+  async createPage(payload: CreatePagePayload): Promise<Page> {
+    const response = await apiClient.post<{ data: Page }>(
+      '/api/v1/platform/cms/pages',
+      payload
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Update page
+   */
+  async updatePage(id: number, payload: UpdatePagePayload): Promise<Page> {
+    const response = await apiClient.put<{ data: Page }>(
+      `/api/v1/platform/cms/pages/${id}`,
+      payload
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Publish page
+   */
+  async publishPage(id: number): Promise<Page> {
+    const response = await apiClient.post<{ data: Page }>(
+      `/api/v1/platform/cms/pages/${id}/publish`
+    );
+    return response.data.data;
   },
 
   /**
@@ -120,3 +168,24 @@ export const cmsEndpoints = {
     await apiClient.delete(`/api/v1/platform/cms/docs/${id}`);
   },
 };
+
+// Payload types for create/update operations
+export interface CreatePagePayload {
+  type?: string;
+  title: Record<string, string>;
+  slug: Record<string, string>;
+  excerpt?: Record<string, string>;
+  content: Record<string, string>;
+  status: 'draft' | 'scheduled' | 'published';
+  published_at?: string;
+  seo?: Record<string, unknown>;
+  template?: string;
+  sort_order?: number;
+}
+
+export interface UpdatePagePayload extends Partial<CreatePagePayload> {
+  title: Record<string, string>;
+  slug: Record<string, string>;
+  content: Record<string, string>;
+  status: 'draft' | 'scheduled' | 'published';
+}
