@@ -29,7 +29,7 @@ import {
 const userSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  role: z.enum(['super_admin', 'merchant', 'user']),
+  role: z.enum(['super_admin', 'store_admin', 'staff', 'customer']),
   status: z.enum(['active', 'suspended', 'inactive']),
 });
 
@@ -61,8 +61,8 @@ export function EditUserDialog({
     defaultValues: {
       name: user.name,
       email: user.email,
-      role: user.role,
-      status: user.status,
+      role: user.role || 'customer', // Default to 'customer' if role is null
+      status: user.status || 'active', // Default to 'active' if status is null
     },
   });
 
@@ -121,14 +121,15 @@ export function EditUserDialog({
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value) => setValue('role', value as User['role'])}>
+            <Select value={role} onValueChange={(value) => setValue('role', value as UserFormData['role'])}>
               <SelectTrigger id="role">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="super_admin">Super Admin</SelectItem>
-                <SelectItem value="merchant">Merchant</SelectItem>
-                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="store_admin">Store Admin</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
+                <SelectItem value="customer">Customer</SelectItem>
               </SelectContent>
             </Select>
             {errors.role && (
@@ -138,7 +139,7 @@ export function EditUserDialog({
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(value) => setValue('status', value as User['status'])}>
+            <Select value={status} onValueChange={(value) => setValue('status', value as UserFormData['status'])}>
               <SelectTrigger id="status">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>

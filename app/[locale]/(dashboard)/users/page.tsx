@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocale } from 'next-intl';
 import { Eye, Ban, CheckCircle, MoreHorizontal, Edit, Trash2, UserCog } from 'lucide-react';
 import { usersEndpoints } from '@/lib/api/endpoints/users';
-import type { User, UserFilters } from '@/lib/types/user';
+import type { User, UserFilters, PaginatedResponse } from '@/lib/types/user';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,46 +29,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
+import { formatUserRole } from '@/lib/utils';
 
 export default function UsersPage() {
-  const t = useTranslations('users');
   const locale = useLocale();
+  const queryClient = useQueryClient();
 
-  const [users, setUsers] = React.useState<User[]>([]);
-  const [loading, setLoading] = React.useState(true);
   const [filters, setFilters] = React.useState<UserFilters>({
     page: 1,
     per_page: 20,
     sort: 'created_at',
     order: 'desc',
   });
-  const [meta, setMeta] = React.useState({
+  const usersQueryKey = React.useMemo(() => ['platform-users', filters] as const, [filters]);
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: usersQueryKey,
+    queryFn: () => usersEndpoints.getUsers(filters),
+    placeholderData: keepPreviousData,
+  });
+  const users = data?.data ?? [];
+  const meta = data?.meta ?? {
     current_page: 1,
     total: 0,
-    per_page: 20,
+    per_page: filters.per_page ?? 20,
     last_page: 1,
-  });
-
-  // Fetch users
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      try {
-        console.log('[Users Page] Fetching with filters:', filters);
-        const response = await usersEndpoints.getUsers(filters);
-        setUsers(response.data);
-        if (response.meta) {
-          setMeta(response.meta);
-        }
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [filters]);
+  };
 
   // Handle search
   const handleSearch = React.useCallback((search: string) => {
@@ -75,7 +61,10 @@ export default function UsersPage() {
   }, []);
 
   // Handle filter change
-  const handleFilterChange = (key: keyof UserFilters, value: any) => {
+  const handleFilterChange = (
+    key: keyof UserFilters,
+    value: UserFilters[keyof UserFilters]
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
@@ -90,7 +79,6 @@ export default function UsersPage() {
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    console.log('[Users Page] Page change requested:', page);
     setFilters((prev) => ({ ...prev, page }));
   };
 
@@ -102,10 +90,15 @@ export default function UsersPage() {
           ? await usersEndpoints.suspendUser(userId)
           : await usersEndpoints.activateUser(userId);
 
-      // Update the user in the list
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, status: updatedUser.status } : u))
-      );
+      queryClient.setQueryData<PaginatedResponse<User>>(usersQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          data: current.data.map((u) =>
+            u.id === userId ? { ...u, status: updatedUser.status } : u
+          ),
+        };
+      });
     } catch (error) {
       console.error('Failed to update user status:', error);
     }
@@ -117,8 +110,16 @@ export default function UsersPage() {
 
     try {
       await usersEndpoints.deleteUser(userId);
-      // Remove user from list
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      queryClient.setQueryData<PaginatedResponse<User>>(usersQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          data: current.data.filter((u) => u.id !== userId),
+          meta: {
+            ...current.meta,
+            total: Math.max(0, current.meta.total - 1),
+          },
+        };
+      });
     } catch (error) {
       console.error('Failed to delete user:', error);
     }
@@ -153,10 +154,12 @@ export default function UsersPage() {
     switch (role) {
       case 'super_admin':
         return 'default';
-      case 'merchant':
+      case 'store_admin':
         return 'info';
-      case 'user':
+      case 'staff':
         return 'secondary';
+      case 'customer':
+        return 'warning';
       default:
         return 'default';
     }
@@ -187,7 +190,7 @@ export default function UsersPage() {
       sortable: true,
       render: (user) => (
         <Badge variant={getRoleVariant(user.role)}>
-          {user.role ? user.role.replace('_', ' ') : 'N/A'}
+          {formatUserRole(user.role)}
         </Badge>
       ),
     },
@@ -333,8 +336,9 @@ export default function UsersPage() {
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
               <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="merchant">Merchant</SelectItem>
-              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="store_admin">Store Admin</SelectItem>
+              <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="customer">Customer</SelectItem>
             </SelectContent>
           </Select>
 
@@ -358,12 +362,15 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      {loading ? (
+      {isLoading && users.length === 0 ? (
         <div className="rounded-md border p-8 text-center">
           <div className="text-muted-foreground">Loading users...</div>
         </div>
       ) : (
         <>
+          {isFetching && (
+            <div className="text-sm text-muted-foreground">Refreshing users...</div>
+          )}
           <DataTable
             columns={columns}
             data={users}

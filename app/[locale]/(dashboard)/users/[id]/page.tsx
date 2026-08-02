@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EditUserDialog } from '@/components/users/edit-user-dialog';
 import { format, formatDistanceToNow } from 'date-fns';
+import { formatUserRole } from '@/lib/utils';
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -38,7 +39,9 @@ export default function UserDetailPage() {
 
   const [user, setUser] = React.useState<UserDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(
+    () => searchParams.get('edit') === 'true'
+  );
 
   // Extract user ID from params
   React.useEffect(() => {
@@ -49,13 +52,6 @@ export default function UserDetailPage() {
     };
     extractId();
   }, [params]);
-
-  // Check if edit query param is present
-  React.useEffect(() => {
-    if (searchParams.get('edit') === 'true' && user) {
-      setEditDialogOpen(true);
-    }
-  }, [searchParams, user]);
 
   // Fetch user
   React.useEffect(() => {
@@ -175,7 +171,7 @@ export default function UserDetailPage() {
               <Badge variant={getStatusVariant(user.status)}>
                 {user.status}
               </Badge>
-              <Badge variant="info">{user.role ? user.role.replace('_', ' ') : 'N/A'}</Badge>
+              <Badge variant="info">{formatUserRole(user.role)}</Badge>
               {user.email_verified && (
                 <Badge variant="success">Email Verified</Badge>
               )}
@@ -247,7 +243,7 @@ export default function UserDetailPage() {
               <Shield className="h-5 w-5 text-muted-foreground" />
               <div>
                 <div className="text-sm text-muted-foreground">Role</div>
-                <div className="font-medium">{user.role ? user.role.replace('_', ' ') : 'N/A'}</div>
+                <div className="font-medium">{formatUserRole(user.role)}</div>
               </div>
             </div>
 
@@ -349,7 +345,7 @@ export default function UserDetailPage() {
         <CardContent>
           <div className="space-y-4">
             {(user.recent_activity ?? []).length > 0 ? (
-              user.recent_activity.map((activity) => (
+              (user.recent_activity ?? []).map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-start gap-3 pb-4 last:pb-0 border-b last:border-0"
@@ -386,7 +382,7 @@ export default function UserDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {user.stores.map((store) => (
+              {(user.stores ?? []).map((store) => (
                 <div
                   key={store.id}
                   className="flex items-center justify-between pb-4 last:pb-0 border-b last:border-0"
