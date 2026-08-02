@@ -18,8 +18,14 @@ export function SearchInput({
 }: SearchInputProps) {
   const [value, setValue] = React.useState('');
   const timeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
+  const hasMountedRef = React.useRef(false);
 
   React.useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
     if (onSearch) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
