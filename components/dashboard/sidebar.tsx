@@ -27,7 +27,7 @@ export function Sidebar() {
     { name: t('home'), href: `/${locale}`, icon: LayoutDashboard },
     { name: t('users'), href: `/${locale}/users`, icon: Users },
     { name: t('stores'), href: `/${locale}/stores`, icon: Store },
-    { name: t('cms'), href: `/${locale}/cms`, icon: FileText },
+    { name: t('cms'), href: `/${locale}/cms/pages`, icon: FileText },
     { name: t('audit'), href: `/${locale}/audit`, icon: ScrollText },
     { name: t('features'), href: `/${locale}/features`, icon: Flag },
   ];

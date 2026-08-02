@@ -1,51 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Users, Store, DollarSign, ShoppingCart, TrendingUp, AlertCircle } from 'lucide-react';
+import { useDashboardUser } from '@/components/dashboard/dashboard-layout-client';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { LineChart } from '@/components/dashboard/charts/line-chart';
 import { BarChart } from '@/components/dashboard/charts/bar-chart';
-import { getMockDashboardStats, getMockUserGrowth, getMockRevenueData } from '@/lib/api/endpoints/dashboard';
 import type { DashboardStats, TimeSeriesData } from '@/lib/types/dashboard';
 
 export default function HomePage() {
-  const [userName, setUserName] = useState<string>('');
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [userGrowth, setUserGrowth] = useState<TimeSeriesData | null>(null);
-  const [revenueData, setRevenueData] = useState<TimeSeriesData | null>(null);
-
-  useEffect(() => {
-    // Fetch user info and dashboard data
-    const fetchData = async () => {
-      try {
-        // Fetch authenticated user
-        const userResponse = await fetch('/api/auth/me', {
-          credentials: 'include',
-        });
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          if (userData.success && userData.user) {
-            setUserName(userData.user.name);
-            setUserEmail(userData.user.email);
-          }
-        }
-
-        // For now, use mock data
-        // TODO: Replace with real API calls when backend endpoints are ready
-        setStats(getMockDashboardStats());
-        setUserGrowth(getMockUserGrowth());
-        setRevenueData(getMockRevenueData());
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const user = useDashboardUser();
+  const [stats] = useState<DashboardStats | null>(null);
+  const [userGrowth] = useState<TimeSeriesData | null>(null);
+  const [revenueData] = useState<TimeSeriesData | null>(null);
+  const loading = false;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -63,7 +31,7 @@ export default function HomePage() {
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {loading ? 'Welcome!' : `Welcome, ${userName}! 👋`}
+          {loading ? 'Welcome!' : `Welcome, ${user?.name || 'User'}! 👋`}
         </h1>
         <p className="text-muted-foreground mt-2">
           {loading ? 'Platform Dashboard' : `Here's what's happening with your platform today.`}

@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/lib/providers/theme-provider';
 import { QueryProvider } from '@/lib/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { RadixSelectScrollLockFix } from '@/components/ui/radix-select-scroll-fix';
 import '../globals.css';
 
 const inter = Inter({
@@ -30,6 +31,7 @@ export default async function LocaleLayout({
           <ThemeProvider defaultTheme="system" storageKey="dashboard-theme">
             <QueryProvider>
               {children}
+              <RadixSelectScrollLockFix />
               <Toaster />
             </QueryProvider>
           </ThemeProvider>
