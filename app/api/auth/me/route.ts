@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
     
     // Get ALL cookies from the browser request and forward them
     const cookieHeader = request.headers.get('cookie') || '';
@@ -24,7 +26,10 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         'Cookie': cookieHeader,
+        ...(origin && { Origin: origin }),
+        ...(referer && { Referer: referer }),
       },
     });
     

@@ -1,12 +1,28 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { SignInInput } from '@/lib/validation/auth.schema';
+
+async function getRequestOrigin() {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host');
+
+  if (!host) {
+    return null;
+  }
+
+  const protocol = requestHeaders.get('x-forwarded-proto')
+    || (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
+
+  return `${protocol}://${host}`;
+}
 
 export async function signInAction(credentials: SignInInput, locale: string) {
   try {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const requestOrigin = await getRequestOrigin();
+    const requestReferer = requestOrigin ? `${requestOrigin}/${locale}/sign-in` : undefined;
     
     console.log('[signInAction] Step 1: Getting CSRF cookie from:', `${baseURL}/sanctum/csrf-cookie`);
     
@@ -15,6 +31,9 @@ export async function signInAction(credentials: SignInInput, locale: string) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(requestOrigin && { Origin: requestOrigin }),
+        ...(requestReferer && { Referer: requestReferer }),
       },
     });
     
@@ -62,8 +81,11 @@ export async function signInAction(credentials: SignInInput, locale: string) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         'X-XSRF-TOKEN': xsrfToken,
         'Cookie': cookieHeader,
+        ...(requestOrigin && { Origin: requestOrigin }),
+        ...(requestReferer && { Referer: requestReferer }),
       },
       body: JSON.stringify(credentials),
     });
@@ -177,6 +199,8 @@ export async function getCurrentUserAction() {
   try {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const cookieStore = await cookies();
+    const requestOrigin = await getRequestOrigin();
+    const requestReferer = requestOrigin ? `${requestOrigin}/` : undefined;
     
     // Get ALL cookies to see what we have
     const allCookies = cookieStore.getAll();
@@ -204,14 +228,17 @@ export async function getCurrentUserAction() {
     
     const cookieHeader = `XSRF-TOKEN=${xsrfToken}; ecommerce_session=${sessionCookie}`;
     
-    console.log('[getCurrentUserAction] Calling /auth/me with cookies');
+    console.log('[getCurrentUserAction] Calling /api/v1/platform/auth/me with cookies');
     console.log('[getCurrentUserAction] Cookie header length:', cookieHeader.length);
     
     const response = await fetch(`${baseURL}/api/v1/platform/auth/me`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         'Cookie': cookieHeader,
+        ...(requestOrigin && { Origin: requestOrigin }),
+        ...(requestReferer && { Referer: requestReferer }),
       },
     });
     
@@ -263,6 +290,8 @@ export async function signOutAction(locale: string) {
   try {
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const cookieStore = await cookies();
+    const requestOrigin = await getRequestOrigin();
+    const requestReferer = requestOrigin ? `${requestOrigin}/${locale}` : undefined;
     
     // Get cookies to send with logout request
     const xsrfToken = cookieStore.get('XSRF-TOKEN')?.value;
@@ -275,8 +304,11 @@ export async function signOutAction(locale: string) {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
           'X-XSRF-TOKEN': decodeURIComponent(xsrfToken),
           'Cookie': cookieHeader,
+          ...(requestOrigin && { Origin: requestOrigin }),
+          ...(requestReferer && { Referer: requestReferer }),
         },
       });
     }

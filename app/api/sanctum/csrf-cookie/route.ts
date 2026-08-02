@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.BACKEND_URL ||
+  'http://localhost:8000';
 
 /**
  * CSRF Cookie Proxy
@@ -11,6 +14,8 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 export async function GET(request: NextRequest) {
   try {
     const backendUrl = `${BACKEND_URL}/sanctum/csrf-cookie`;
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
     
     console.log('[CSRF Cookie Proxy] Requesting CSRF token');
 
@@ -22,6 +27,9 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(origin && { 'Origin': origin }),
+        ...(referer && { 'Referer': referer }),
         ...(cookieHeader && { 'Cookie': cookieHeader }),
       },
       credentials: 'include',
@@ -29,8 +37,8 @@ export async function GET(request: NextRequest) {
 
     console.log('[CSRF Cookie Proxy] Backend response:', response.status);
 
-    // Forward Set-Cookie headers from Laravel to browser
-    const setCookieHeaders = response.headers.get('set-cookie');
+    // Forward every Set-Cookie header from Laravel to the browser.
+    const setCookieHeaders = response.headers.getSetCookie();
 
     // Create Next.js response
     const nextResponse = new NextResponse(null, {
@@ -38,9 +46,11 @@ export async function GET(request: NextRequest) {
     });
 
     // Forward cookies to browser
-    if (setCookieHeaders) {
-      nextResponse.headers.set('Set-Cookie', setCookieHeaders);
-      console.log('[CSRF Cookie Proxy] Forwarding Set-Cookie headers');
+    if (setCookieHeaders.length > 0) {
+      for (const setCookieHeader of setCookieHeaders) {
+        nextResponse.headers.append('Set-Cookie', setCookieHeader);
+      }
+      console.log('[CSRF Cookie Proxy] Forwarding Set-Cookie headers:', setCookieHeaders.length);
     }
 
     return nextResponse;

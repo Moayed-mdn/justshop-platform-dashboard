@@ -1,71 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+
+function decodeXsrfToken(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
     const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    
-    console.log('[API /auth/signin] Step 1: Getting CSRF cookie');
-    
-    // Step 1: Get CSRF cookie
-    const csrfResponse = await fetch(`${baseURL}/sanctum/csrf-cookie`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+    const requestCookieHeader = request.headers.get('cookie') || '';
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    const rawXsrfToken = request.cookies.get('XSRF-TOKEN')?.value;
+    const xsrfToken = rawXsrfToken ? decodeXsrfToken(rawXsrfToken) : '';
+
+    console.log('[API /auth/signin] Step 1: Validating browser CSRF cookies', {
+      hasCookieHeader: !!requestCookieHeader,
+      hasXsrfToken: !!xsrfToken,
     });
-    
-    // Extract cookies from the response
-    const setCookieHeaders = csrfResponse.headers.getSetCookie();
-    console.log('[API /auth/signin] Step 2: Received', setCookieHeaders.length, 'Set-Cookie headers');
-    
-    // Parse XSRF-TOKEN and session cookie from Set-Cookie headers
-    let xsrfToken = '';
-    const allCookies: string[] = [];
-    
-    for (const setCookie of setCookieHeaders) {
-      const cookiePair = setCookie.split(';')[0];
-      allCookies.push(cookiePair);
-      
-      if (setCookie.includes('XSRF-TOKEN=')) {
-        const match = setCookie.match(/XSRF-TOKEN=([^;]+)/);
-        if (match) {
-          xsrfToken = decodeURIComponent(match[1]);
-        }
-      }
-    }
-    
-    const cookieHeader = allCookies.join('; ');
-    
-    if (!xsrfToken || allCookies.length === 0) {
+    // #region debug-point A:signin-proxy-entry
+    fetch('http://127.0.0.1:7777/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: 'signin-session-error', runId: 'post-fix', hypothesisId: 'A', location: 'app/api/auth/signin/route.ts', msg: '[DEBUG] signin proxy received browser request', data: { baseURL, origin, referer, hasCookieHeader: !!requestCookieHeader, cookieHeaderLength: requestCookieHeader.length, hasXsrfToken: !!xsrfToken, cookieNames: requestCookieHeader.split(';').map((value) => value.trim().split('=')[0]).filter(Boolean), host: request.headers.get('host') }, ts: Date.now() }) }).catch(() => {});
+    // #endregion
+
+    if (!requestCookieHeader || !xsrfToken) {
       return NextResponse.json(
         {
           success: false,
           message: 'common.error',
-          debug: 'Failed to get CSRF token from backend',
+          debug: 'Missing Sanctum CSRF cookie. Request /api/sanctum/csrf-cookie first.',
         },
-        { status: 500 }
+        { status: 419 }
       );
     }
-    
-    // Step 2: Make login request
-    console.log('[API /auth/signin] Step 3: Attempting login');
+
+    console.log('[API /auth/signin] Step 2: Attempting login');
     
     const loginResponse = await fetch(`${baseURL}/api/v1/platform/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
         'X-XSRF-TOKEN': xsrfToken,
-        'Cookie': cookieHeader,
+        Cookie: requestCookieHeader,
+        ...(origin && { Origin: origin }),
+        ...(referer && { Referer: referer }),
       },
       body: JSON.stringify({ email, password }),
     });
     
     const data = await loginResponse.json();
+    // #region debug-point E:signin-proxy-response
+    fetch('http://127.0.0.1:7777/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: 'signin-session-error', runId: 'post-fix', hypothesisId: 'E', location: 'app/api/auth/signin/route.ts', msg: '[DEBUG] signin proxy received backend login response', data: { status: loginResponse.status, ok: loginResponse.ok, success: data?.success ?? null, code: data?.code ?? null, message: data?.message ?? null, debug: data?.debug ?? null, setCookieCount: loginResponse.headers.getSetCookie().length }, ts: Date.now() }) }).catch(() => {});
+    // #endregion
     
-    console.log('[API /auth/signin] Step 4: Login response:', {
+    console.log('[API /auth/signin] Step 3: Login response:', {
       status: loginResponse.status,
       success: data.success,
     });
@@ -74,7 +67,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
+          code: data.code,
           message: data.code === 'AUTH_INVALID_CREDENTIALS'
+            || data.code === 'AUTH_001'
             ? 'auth.invalidCredentials'
             : 'common.error',
           debug: `API Error: ${data.message || loginResponse.statusText}`,
@@ -89,10 +84,11 @@ export async function POST(request: NextRequest) {
         success: true,
         redirect: true,
       });
-      
-      // Forward all Laravel cookies to the browser
+
       const authCookies = loginResponse.headers.getSetCookie();
-      console.log('[API /auth/signin] Step 5: Forwarding', authCookies.length, 'cookies to browser');
+      console.log('[API /auth/signin] Step 4: Forwarding cookies to browser', {
+        authCookies: authCookies.length,
+      });
       
       // Forward cookies EXACTLY as Laravel sent them
       for (const setCookieHeader of authCookies) {

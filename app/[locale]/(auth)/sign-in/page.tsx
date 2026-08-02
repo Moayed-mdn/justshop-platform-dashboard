@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SignInForm } from '@/components/forms/sign-in-form';
 import { LanguageSwitcher } from '@/components/shared/language-switcher';
@@ -12,6 +12,7 @@ export default async function SignInPage({
 }) {
   const { locale } = await params;
   const cookieStore = await cookies();
+  const requestHeaders = await headers();
   
   // Check if user has session cookie
   const sessionCookie = cookieStore.get('ecommerce_session');
@@ -19,18 +20,21 @@ export default async function SignInPage({
   // If session cookie exists, check if it's valid by calling backend
   if (sessionCookie) {
     try {
-      const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const allCookiesHeader = cookieStore.getAll()
-        .map(c => `${c.name}=${c.value}`)
-        .join('; ');
-      
-      const response = await fetch(`${baseURL}/api/v1/platform/auth/me`, {
+      const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host');
+      const protocol = requestHeaders.get('x-forwarded-proto')
+        || (host?.startsWith('localhost') || host?.startsWith('127.0.0.1') ? 'http' : 'https');
+
+      if (!host) {
+        throw new Error('Missing host header');
+      }
+
+      const response = await fetch(new URL('/api/auth/me', `${protocol}://${host}`), {
         headers: {
-          'Accept': 'application/json',
-          'Cookie': allCookiesHeader,
+          Cookie: cookieStore.toString(),
         },
+        cache: 'no-store',
       });
-      
+
       if (response.ok) {
         // User is authenticated, redirect to dashboard
         redirect(`/${locale}`);
