@@ -3,10 +3,79 @@ import type { DashboardStats, TimeSeriesData, RecentActivity } from '@/lib/types
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
+ * Backend Response Types
+ */
+interface BackendDashboardResponse {
+  success: boolean;
+  data: {
+    totalUsers: number;
+    activeUsers: number;
+    totalStores: number;
+    activeStores: number;
+    pendingStores: number;
+    suspendedStores: number;
+    totalRevenue: number;
+    revenueThisMonth: number;
+    totalLeads: number;
+    totalOrders: number;
+    ordersThisMonth: number;
+    pendingOrders: number;
+    usersTrend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+    storesTrend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+    revenueTrend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+    ordersTrend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+    leadsTrend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+    // New subscription fields (camelCase as per backend)
+    totalSubscriptions?: number;
+    activeSubscriptions?: number;
+    trialingSubscriptions?: number;
+    pastDueSubscriptions?: number;
+    canceledSubscriptions?: number;
+    subscriptionsThisMonth?: number;
+    subscriptionsTrend?: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+    totalSubscriptionRevenue?: number;
+    subscriptionRevenueThisMonth?: number;
+    subscriptionRevenueTrend?: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+  };
+}
+
+interface BackendAnalyticsResponse {
+  success: boolean;
+  data: {
+    userGrowth: Array<{ date: string; count: number }>;
+    storeGrowth: Array<{ date: string; count: number }>;
+    revenueByStore: Array<{ storeName: string; revenue: number }>;
+    storeStatus: Array<{ status: string; count: number }>;
+  };
+}
+
+/**
  * Fetch dashboard statistics
+ * Maps backend response to frontend DashboardStats type
  */
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const response = await fetch(`${BASE_URL}/api/v1/platform/dashboard/stats`, {
+  const response = await fetch(`${BASE_URL}/api/v1/platform/dashboard`, {
     credentials: 'include',
     headers: {
       'Accept': 'application/json',
@@ -17,148 +86,133 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     throw new Error('Failed to fetch dashboard stats');
   }
 
-  const data = await response.json();
-  return data.data;
+  const result: BackendDashboardResponse = await response.json();
+  const data = result.data;
+
+  // Map backend response to frontend type
+  return {
+    users: {
+      total: data.totalUsers,
+      active: data.activeUsers,
+      new_this_month: 0, // Can be calculated as usersThisMonth if backend provides it
+      growth_percentage: data.usersTrend.direction === 'up' ? data.usersTrend.change : -data.usersTrend.change,
+    },
+    stores: {
+      total: data.totalStores,
+      active: data.activeStores,
+      pending: data.pendingStores,
+      suspended: data.suspendedStores,
+    },
+    revenue: {
+      total: data.totalRevenue,
+      this_month: data.revenueThisMonth,
+      last_month: 0, // Backend doesn't track this separately yet
+      growth_percentage: data.revenueTrend.direction === 'up' ? data.revenueTrend.change : -data.revenueTrend.change,
+    },
+    orders: {
+      total: data.totalOrders,
+      this_month: data.ordersThisMonth,
+      pending: data.pendingOrders,
+      growth_percentage: data.ordersTrend.direction === 'up' ? data.ordersTrend.change : -data.ordersTrend.change,
+    },
+    // Map new subscription fields if present
+    subscriptions: data.totalSubscriptions !== undefined ? {
+      total: data.totalSubscriptions,
+      active: data.activeSubscriptions || 0,
+      trialing: data.trialingSubscriptions || 0,
+      past_due: data.pastDueSubscriptions || 0,
+      canceled: data.canceledSubscriptions || 0,
+      this_month: data.subscriptionsThisMonth || 0,
+      trend: data.subscriptionsTrend || { change: 0, direction: 'neutral' },
+    } : undefined,
+    subscription_revenue: data.totalSubscriptionRevenue !== undefined ? {
+      total: data.totalSubscriptionRevenue,
+      this_month: data.subscriptionRevenueThisMonth || 0,
+      trend: data.subscriptionRevenueTrend || { change: 0, direction: 'neutral' },
+    } : undefined,
+  };
+}
+
+/**
+ * Fetch analytics data (includes all chart data)
+ * Backend combines all analytics into a single endpoint
+ */
+export async function getAnalyticsData(): Promise<BackendAnalyticsResponse['data']> {
+  const response = await fetch(`${BASE_URL}/api/v1/platform/analytics`, {
+    credentials: 'include',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch analytics data');
+  }
+
+  const result: BackendAnalyticsResponse = await response.json();
+  return result.data;
 }
 
 /**
  * Fetch user growth chart data
  */
 export async function getUserGrowthData(period: string = '30d'): Promise<TimeSeriesData> {
-  const response = await fetch(`${BASE_URL}/api/v1/platform/dashboard/charts/users?period=${period}`, {
-    credentials: 'include',
-    headers: {
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch user growth data');
-  }
-
-  const data = await response.json();
-  return data.data;
+  const analytics = await getAnalyticsData();
+  
+  return {
+    data: analytics.userGrowth.map(item => ({
+      date: item.date,
+      value: item.count,
+      label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    })),
+    period,
+  };
 }
 
 /**
  * Fetch store growth chart data
  */
 export async function getStoreGrowthData(period: string = '30d'): Promise<TimeSeriesData> {
-  const response = await fetch(`${BASE_URL}/api/v1/platform/dashboard/charts/stores?period=${period}`, {
-    credentials: 'include',
-    headers: {
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch store growth data');
-  }
-
-  const data = await response.json();
-  return data.data;
+  const analytics = await getAnalyticsData();
+  
+  return {
+    data: analytics.storeGrowth.map(item => ({
+      date: item.date,
+      value: item.count,
+      label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    })),
+    period,
+  };
 }
 
 /**
  * Fetch revenue chart data
+ * Note: Backend doesn't have separate revenue endpoint yet, returns store revenue data
  */
 export async function getRevenueData(period: string = '12m'): Promise<TimeSeriesData> {
-  const response = await fetch(`${BASE_URL}/api/v1/platform/dashboard/charts/revenue?period=${period}`, {
-    credentials: 'include',
-    headers: {
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch revenue data');
-  }
-
-  const data = await response.json();
-  return data.data;
+  const analytics = await getAnalyticsData();
+  
+  // Convert revenueByStore to time series format (best effort mapping)
+  return {
+    data: analytics.revenueByStore.map((item, index) => ({
+      date: new Date().toISOString().split('T')[0],
+      value: item.revenue,
+      label: item.storeName,
+    })),
+    period,
+  };
 }
 
 /**
  * Fetch recent activity
+ * Note: Backend doesn't implement this endpoint yet
  */
 export async function getRecentActivity(limit: number = 10): Promise<RecentActivity> {
-  const response = await fetch(`${BASE_URL}/api/v1/platform/dashboard/recent-activity?limit=${limit}`, {
-    credentials: 'include',
-    headers: {
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch recent activity');
-  }
-
-  const data = await response.json();
-  return data.data;
-}
-
-/**
- * Generate mock data for development
- * Remove this once backend endpoints are ready
- */
-export function getMockDashboardStats(): DashboardStats {
+  // Backend endpoint not implemented yet
+  // Return empty data structure
   return {
-    users: {
-      total: 1234,
-      active: 980,
-      new_this_month: 145,
-      growth_percentage: 12.5,
-    },
-    stores: {
-      total: 89,
-      active: 67,
-      pending: 12,
-      suspended: 10,
-    },
-    revenue: {
-      total: 125430.50,
-      this_month: 23450.75,
-      last_month: 19230.00,
-      growth_percentage: 21.9,
-    },
-    orders: {
-      total: 3456,
-      this_month: 567,
-      pending: 23,
-    },
+    activities: [],
   };
 }
 
-export function getMockUserGrowth(): TimeSeriesData {
-  const data = [];
-  const now = new Date();
-  
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split('T')[0],
-      value: Math.floor(Math.random() * 50) + 20,
-      label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    });
-  }
-  
-  return {
-    data,
-    period: '30d',
-  };
-}
 
-export function getMockRevenueData(): TimeSeriesData {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const data = months.map((month, i) => ({
-    date: `2024-${String(i + 1).padStart(2, '0')}-01`,
-    value: Math.floor(Math.random() * 30000) + 10000,
-    label: month,
-  }));
-  
-  return {
-    data,
-    period: '12m',
-  };
-}

@@ -23,6 +23,28 @@ export interface DashboardStats {
     total: number;
     this_month: number;
     pending: number;
+    growth_percentage?: number;
+  };
+  // New subscription fields
+  subscriptions?: {
+    total: number;
+    active: number;
+    trialing: number;
+    past_due: number;
+    canceled: number;
+    this_month: number;
+    trend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
+  };
+  subscription_revenue?: {
+    total: number;
+    this_month: number;
+    trend: {
+      change: number;
+      direction: 'up' | 'down' | 'neutral';
+    };
   };
 }
 
