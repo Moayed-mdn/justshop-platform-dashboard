@@ -101,7 +101,7 @@ export function PageForm({
       excerpt_ar: resolveLocalizedString(initialData?.excerpt, 'ar', ''),
       content_en: getContentString(initialData?.content, 'en'),
       content_ar: getContentString(initialData?.content, 'ar'),
-      status: initialData?.status || 'draft',
+      status: (initialData?.status || 'draft') as 'draft' | 'scheduled' | 'published',
       published_at: initialData?.published_at || '',
       template: initialData?.template || '',
       sort_order: initialData?.sort_order || 0,

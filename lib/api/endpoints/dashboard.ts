@@ -211,7 +211,9 @@ export async function getRecentActivity(limit: number = 10): Promise<RecentActiv
   // Backend endpoint not implemented yet
   // Return empty data structure
   return {
-    activities: [],
+    users: [],
+    stores: [],
+    transactions: [],
   };
 }
 

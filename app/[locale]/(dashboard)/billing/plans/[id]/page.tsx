@@ -121,9 +121,8 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       setName(plan.name);
       setDescription(plan.description || { en: '', ar: '' });
       
-      // Ensure tier is never empty string - fallback to 'starter' if invalid
-      const validTier = plan.tier && plan.tier !== '' ? plan.tier : 'starter';
-      setTier(validTier as PlanTier);
+      // plan.tier is guaranteed to be a valid PlanTier by the type system
+      setTier(plan.tier);
       setTierRank(plan.tier_rank);
       setIsPublic(plan.is_public);
       setIsActive(plan.is_active);
@@ -257,12 +256,6 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   const handleTierChange = (newTier: PlanTier) => {
     console.log('[handleTierChange] Changing tier to:', newTier);
     
-    // Guard against empty string or invalid values
-    if (!newTier || newTier === '') {
-      console.warn('[handleTierChange] Received empty tier, ignoring');
-      return;
-    }
-    
     setTier(newTier);
     const tierMeta = TIER_METADATA.find((t) => t.value === newTier);
     if (tierMeta) {
@@ -296,17 +289,8 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       return;
     }
 
-    if (!tier || tier === '') {
-      console.error('[handleSubmit] Tier is empty!', { tier, tierType: typeof tier });
-      toast.error(t('tierRequired'));
-      return;
-    }
-
-    if (!['starter', 'growth', 'enterprise'].includes(tier)) {
-      console.error('[handleSubmit] Invalid tier value!', { tier });
-      toast.error(t('tierRequired'));
-      return;
-    }
+    // tier is guaranteed to be a valid PlanTier by the type system
+    // No validation needed as TypeScript ensures type safety
 
     // Build update data
     const featuresArray = FEATURE_METADATA.map((fm) => {

@@ -60,7 +60,7 @@ export const storesEndpoints = {
       { method: 'PATCH' }
     );
     
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -72,7 +72,7 @@ export const storesEndpoints = {
       { method: 'PATCH' }
     );
     
-    return response.data;
+    return response.data.data;
   },
 
   /**

@@ -92,7 +92,7 @@ export const plansEndpoints = {
       { method: 'PATCH' }
     );
 
-    return response.data;
+    return response.data.data;
   },
 
   /**

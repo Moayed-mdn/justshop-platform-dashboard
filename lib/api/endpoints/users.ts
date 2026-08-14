@@ -59,7 +59,7 @@ export const usersEndpoints = {
       { method: 'PATCH' }
     );
     
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -71,7 +71,7 @@ export const usersEndpoints = {
       { method: 'PATCH' }
     );
     
-    return response.data;
+    return response.data.data;
   },
 
   /**
