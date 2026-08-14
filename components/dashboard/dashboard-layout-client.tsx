@@ -39,10 +39,10 @@ export function DashboardLayoutClient({
         <main
           className={cn(
             'transition-all duration-300 pt-16',
-            sidebarCollapsed ? 'ml-16' : 'ml-64'
+            sidebarCollapsed ? 'ms-16' : 'ms-64'
           )}
         >
-          <div className="container mx-auto p-6">
+          <div className="container mx-auto p-6 space-y-6">
             {children}
           </div>
         </main>

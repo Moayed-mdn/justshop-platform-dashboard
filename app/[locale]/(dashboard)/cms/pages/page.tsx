@@ -236,7 +236,7 @@ export default function PagesListPage() {
               {isFetching && (
                 <div className="mb-3 text-sm text-muted-foreground">Refreshing pages...</div>
               )}
-              <div className="rounded-md border">
+              <div className="rounded-[var(--radius-md)] overflow-hidden [box-shadow:var(--shadow-sm)]">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -246,7 +246,7 @@ export default function PagesListPage() {
                       <TableHead>Status</TableHead>
                       <TableHead>Template</TableHead>
                       <TableHead>Updated</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-end">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -287,10 +287,10 @@ export default function PagesListPage() {
                               addSuffix: true,
                             })}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-end">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
+                                <Button variant="ghost" size="icon" className="action-icon">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -302,7 +302,7 @@ export default function PagesListPage() {
                                     router.push(`/${locale}/cms/pages/${page.id}`)
                                   }
                                 >
-                                  <Eye className="mr-2 h-4 w-4" />
+                                  <Eye className="me-2 h-4 w-4" />
                                   View
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
@@ -310,7 +310,7 @@ export default function PagesListPage() {
                                     router.push(`/${locale}/cms/pages/${page.id}/edit`)
                                   }
                                 >
-                                  <Edit className="mr-2 h-4 w-4" />
+                                  <Edit className="me-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -318,7 +318,7 @@ export default function PagesListPage() {
                                   className="text-destructive"
                                   onClick={() => handleDelete(page.id, title)}
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <Trash2 className="me-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>

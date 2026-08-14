@@ -21,49 +21,46 @@ export function StatCard({
   description,
   loading = false,
 }: StatCardProps) {
-  const getTrendColor = () => {
-    if (!trend || trend === 'neutral') return 'text-muted-foreground';
-    return trend === 'up' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
-  };
-
-  const getTrendIcon = () => {
-    if (!trend || trend === 'neutral') return Minus;
-    return trend === 'up' ? ArrowUp : ArrowDown;
-  };
-
-  const TrendIcon = getTrendIcon();
-
   if (loading) {
     return (
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="h-4 w-28 bg-muted animate-pulse rounded" />
           {Icon && (
             <div className="h-4 w-4 bg-muted animate-pulse rounded" />
           )}
         </CardHeader>
-        <CardContent>
-          <div className="h-8 w-32 bg-muted animate-pulse rounded mb-2" />
-          <div className="h-3 w-40 bg-muted animate-pulse rounded" />
+        <CardContent className="space-y-2">
+          <div className="h-9 w-32 bg-muted animate-pulse rounded" />
+          <div className="h-3.5 w-36 bg-muted animate-pulse rounded" />
         </CardContent>
       </Card>
     );
   }
 
+  const getTrendColor = () => {
+    if (!trend || trend === 'neutral') return 'text-muted-foreground';
+    return trend === 'up' ? 'text-success' : 'text-destructive';
+  };
+
+  const TrendIcon = !trend || trend === 'neutral' 
+    ? Minus 
+    : trend === 'up' 
+    ? ArrowUp 
+    : ArrowDown;
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-card-title">{title}</CardTitle>
         {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-stat-value">{value}</div>
         {(change !== undefined || description) && (
-          <div className="flex items-center gap-2 text-xs mt-1">
+          <div className="flex items-center gap-2 text-xs mt-1.5">
             {change !== undefined && (
-              <span className={cn('flex items-center gap-1', getTrendColor())}>
+              <span className={cn('inline-flex items-center gap-1 font-medium', getTrendColor())}>
                 <TrendIcon className="h-3 w-3" />
                 {Math.abs(change)}%
               </span>

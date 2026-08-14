@@ -42,18 +42,18 @@ export function DataTable<T>({
 
   const getSortIcon = (columnKey: string) => {
     if (sortKey !== columnKey) {
-      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+      return <ArrowUpDown className="ms-2 h-4 w-4" />;
     }
     return sortOrder === 'asc' ? (
-      <ArrowUp className="ml-2 h-4 w-4" />
+      <ArrowUp className="ms-2 h-4 w-4" />
     ) : (
-      <ArrowDown className="ml-2 h-4 w-4" />
+      <ArrowDown className="ms-2 h-4 w-4" />
     );
   };
 
   if (data.length === 0) {
     return (
-      <div className="rounded-md border">
+      <div className="rounded-[var(--radius-md)] bg-card [box-shadow:var(--shadow-sm)]">
         <div className="p-8 text-center text-muted-foreground">
           {emptyMessage}
         </div>
@@ -62,16 +62,17 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={cn('rounded-md border overflow-hidden', className)}>
+    <div className={cn('rounded-[var(--radius-md)] bg-card [box-shadow:var(--shadow-sm)] overflow-hidden', className)}>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b bg-muted/50">
+          <thead className="bg-muted/30">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
                   className={cn(
-                    'px-4 py-3 text-left text-sm font-medium',
+                    'px-4 py-3 text-start text-xs font-semibold tracking-wide text-muted-foreground',
+                    column.key === 'stores' || column.key === 'orders' || column.key === 'id' ? 'numeric-cell' : '',
                     column.className
                   )}
                 >
@@ -79,7 +80,7 @@ export function DataTable<T>({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="-ml-3 h-8"
+                      className="-ms-3 h-8 hover:bg-transparent"
                       onClick={() => handleSort(column.key)}
                     >
                       {column.label}
@@ -92,16 +93,20 @@ export function DataTable<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="[&_tr:nth-child(even)]:bg-muted/20">
             {data.map((item) => (
               <tr
                 key={keyExtractor(item)}
-                className="hover:bg-muted/50 transition-colors"
+                className="hover:bg-muted/40 transition-colors cursor-pointer"
               >
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={cn('px-4 py-3 text-sm', column.className)}
+                    className={cn(
+                      'px-4 py-3 text-sm',
+                      column.key === 'stores' || column.key === 'orders' || column.key === 'id' ? 'numeric-cell' : '',
+                      column.className
+                    )}
                   >
                     {column.render
                       ? column.render(item)

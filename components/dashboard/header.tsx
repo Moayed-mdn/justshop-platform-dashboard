@@ -45,8 +45,8 @@ export function Header({ user }: HeaderProps) {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 z-30 h-16 border-b bg-background transition-all duration-300',
-        sidebarCollapsed ? 'left-16' : 'left-64'
+        'fixed top-0 end-0 z-30 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 transition-all duration-300',
+        sidebarCollapsed ? 'start-16' : 'start-64'
       )}
     >
       <div className="flex h-full items-center justify-between px-4">
@@ -56,6 +56,7 @@ export function Header({ user }: HeaderProps) {
           size="icon"
           className="md:hidden"
           onClick={toggleSidebar}
+          aria-label="Toggle menu"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -71,24 +72,24 @@ export function Header({ user }: HeaderProps) {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>{initials}</AvatarFallback>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.name || 'User'}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
                     {user?.email || 'user@example.com'}
                   </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="me-2 h-4 w-4" />
                 {tAuth('signOut')}
               </DropdownMenuItem>
             </DropdownMenuContent>
