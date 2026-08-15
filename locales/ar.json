@@ -38,6 +38,8 @@
     "of": "من",
     "view": "عرض",
     "filterBy": "تصفية حسب",
+    "published": "منشور",
+    "draft": "مسودة",
     "status": {
       "active": "نشط",
       "inactive": "غير نشط",

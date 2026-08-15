@@ -38,6 +38,8 @@
     "of": "of",
     "view": "View",
     "filterBy": "Filter by",
+    "published": "Published",
+    "draft": "Draft",
     "status": {
       "active": "Active",
       "inactive": "Inactive",
