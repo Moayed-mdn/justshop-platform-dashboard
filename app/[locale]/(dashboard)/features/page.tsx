@@ -69,15 +69,15 @@ export default function FeatureFlagsPage() {
   };
 
   // Handle toggle
-  const handleToggle = async (flagId: number, enabled: boolean) => {
+  const handleToggle = async (flagName: string, enabled: boolean) => {
     try {
-      const updatedFlag = await featureFlagsEndpoints.toggleFeatureFlag(flagId, enabled);
+      const updatedFlag = await featureFlagsEndpoints.toggleFeatureFlag(flagName, enabled);
       queryClient.setQueryData<PaginatedResponse<FeatureFlag>>(flagsQueryKey, (current) => {
         if (!current) return current;
         return {
           ...current,
           data: current.data.map((f) =>
-            f.id === flagId ? { ...f, ...updatedFlag } : f
+            f.name === flagName ? { ...f, ...updatedFlag } : f
           ),
         };
       });
@@ -87,15 +87,15 @@ export default function FeatureFlagsPage() {
   };
 
   // Handle delete
-  const handleDelete = async (flagId: number) => {
+  const handleDelete = async (flagName: string) => {
     if (!confirm(t('confirmDelete'))) return;
 
     try {
-      await featureFlagsEndpoints.deleteFeatureFlag(flagId);
+      await featureFlagsEndpoints.deleteFeatureFlag(flagName);
       queryClient.setQueryData<PaginatedResponse<FeatureFlag>>(flagsQueryKey, (current) => {
         if (!current) return current;
         return {
-          data: current.data.filter((f) => f.id !== flagId),
+          data: current.data.filter((f) => f.name !== flagName),
           meta: {
             ...current.meta,
             total: Math.max(0, current.meta.total - 1),
@@ -145,8 +145,8 @@ export default function FeatureFlagsPage() {
       label: t('status'),
       render: (flag) => (
         <Switch
-          checked={flag.enabled}
-          onCheckedChange={(checked) => handleToggle(flag.id, checked)}
+          checked={flag.value}
+          onCheckedChange={(checked) => handleToggle(flag.name, checked)}
         />
       ),
     },
@@ -157,7 +157,7 @@ export default function FeatureFlagsPage() {
       render: (flag) => (
         <div>
           <div className="font-medium">{flag.name}</div>
-          <div className="text-xs text-muted-foreground">{flag.key}</div>
+          <div className="text-xs text-muted-foreground">{flag.metadata?.description || '-'}</div>
         </div>
       ),
     },
@@ -166,19 +166,27 @@ export default function FeatureFlagsPage() {
       label: t('description'),
       render: (flag) => (
         <p className="text-sm text-muted-foreground max-w-md truncate">
-          {flag.description}
+          {flag.metadata?.owner || '-'} / {flag.metadata?.category || '-'}
         </p>
       ),
     },
     {
       key: 'target_type',
       label: t('target'),
-      render: (flag) => getTargetBadge(flag),
+      render: (flag) => (
+        <Badge variant={flag.has_override ? 'warning' : 'default'}>
+          {flag.has_override ? 'Override' : 'Default'}
+        </Badge>
+      ),
     },
     {
       key: 'environment',
       label: t('environment'),
-      render: (flag) => getEnvironmentBadge(flag.environment),
+      render: (flag) => (
+        <Badge variant="secondary">
+          {flag.metadata?.introduced_wave || 'N/A'}
+        </Badge>
+      ),
     },
     {
       key: 'usage_count',
@@ -186,7 +194,9 @@ export default function FeatureFlagsPage() {
       sortable: true,
       className: 'text-right',
       render: (flag) => (
-        <span className="text-sm">{(flag.usage_count ?? 0).toLocaleString()}</span>
+        <span className="text-sm text-muted-foreground">
+          {flag.metadata?.blast_radius || 'N/A'}
+        </span>
       ),
     },
     {
@@ -195,7 +205,7 @@ export default function FeatureFlagsPage() {
       sortable: true,
       render: (flag) => (
         <span className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(flag.updated_at), { addSuffix: true })}
+          {flag.updated_at ? formatDistanceToNow(new Date(flag.updated_at), { addSuffix: true }) : 'Never'}
         </span>
       ),
     },
@@ -207,7 +217,7 @@ export default function FeatureFlagsPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => handleDelete(flag.id)}
+          onClick={() => handleDelete(flag.name)}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

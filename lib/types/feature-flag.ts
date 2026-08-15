@@ -2,18 +2,22 @@ export type TargetType = 'all' | 'percentage' | 'users' | 'stores';
 export type Environment = 'all' | 'production' | 'staging' | 'development';
 
 export interface FeatureFlag {
-  id: number;
-  name: string;
-  key: string; // unique identifier (e.g., 'new-checkout-flow')
-  description: string;
-  enabled: boolean;
-  target_type: TargetType;
-  target_value?: string | number; // percentage (number) or comma-separated IDs (string)
-  environment: Environment;
-  usage_count: number; // how many users/requests affected
-  created_by: string;
-  created_at: string;
-  updated_at: string;
+  name: string; // unique identifier (e.g., 'observability.events.enabled')
+  value: boolean; // current runtime value
+  has_override: boolean; // whether there's a runtime override
+  updated_at: string | null; // last override timestamp
+  metadata: {
+    default: boolean | string | number;
+    owner?: string;
+    business_owner?: string;
+    description?: string;
+    blast_radius?: string;
+    rollback_effect?: string;
+    expiry_milestone?: string;
+    category?: string;
+    introduced_wave?: string;
+    kill_switch?: boolean;
+  };
 }
 
 export interface FeatureFlagFilters {

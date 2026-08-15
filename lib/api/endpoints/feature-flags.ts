@@ -48,21 +48,20 @@ export const featureFlagsEndpoints = {
    * Toggle feature flag
    */
   async toggleFeatureFlag(
-    id: number,
-    enabled: boolean
-  ): Promise<Partial<FeatureFlag> & Pick<FeatureFlag, 'id' | 'enabled' | 'updated_at'>> {
-    const response = await apiClient.request<Partial<FeatureFlag>>(
-      `/api/v1/platform/features/${id}`,
+    name: string,
+    value: boolean
+  ): Promise<{ name: string; value: boolean; updated_at: string | null }> {
+    const response = await apiClient.request<{ name: string; value: boolean; updated_at: string | null }>(
+      `/api/v1/platform/features/${encodeURIComponent(name)}`,
       {
         method: 'PATCH',
-        body: JSON.stringify({ enabled }),
+        body: JSON.stringify({ value }),
       }
     );
 
     return {
-      ...response.data,
-      id,
-      enabled,
+      name,
+      value,
       updated_at: response.data.updated_at ?? new Date().toISOString(),
     };
   },
@@ -97,7 +96,7 @@ export const featureFlagsEndpoints = {
   /**
    * Delete feature flag
    */
-  async deleteFeatureFlag(id: number): Promise<void> {
-    await apiClient.delete(`/api/v1/platform/feature-flags/${id}`);
+  async deleteFeatureFlag(name: string): Promise<void> {
+    await apiClient.delete(`/api/v1/platform/features/${encodeURIComponent(name)}`);
   },
 };
