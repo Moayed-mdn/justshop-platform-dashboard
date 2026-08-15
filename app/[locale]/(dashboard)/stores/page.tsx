@@ -167,7 +167,7 @@ export default function StoresPage() {
   const columns: Column<Store>[] = [
     {
       key: 'store',
-      label: tCommon('common'),
+      label: tCommon('store'),
       sortable: true,
       render: (store) => (
         <div className="flex items-center gap-3">
