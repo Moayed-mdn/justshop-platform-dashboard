@@ -306,7 +306,7 @@ export default function FeatureFlagsPage() {
           <DataTable
             columns={columns}
             data={flags}
-            keyExtractor={(flag) => flag.id}
+            keyExtractor={(flag) => flag.name}
             onSort={() => handleSort()}
             emptyMessage={t('noFlags')}
           />
