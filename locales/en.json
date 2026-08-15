@@ -463,6 +463,24 @@
     "selectTier": "Select Tier",
     "enterPlanCode": "Enter plan code",
     "enterPlanName": "Enter plan name",
-    "enterDescription": "Enter description"
+    "enterDescription": "Enter description",
+    "confirmVersionTitle": "Create New Plan Version?",
+    "confirmVersionDescription": "You're about to create a new version of this plan.",
+    "confirmVersionDescriptionBold": "This action cannot be undone",
+    "versionWhatHappens": "What will happen:",
+    "versionNewPlan": "A new plan will be created with your changes",
+    "versionArchiveCurrent": "The current plan will be archived (marked as superseded)",
+    "versionSubscribersStay": "Existing subscribers will stay on the current plan",
+    "versionNewSubs": "New subscribers will get the new plan",
+    "versionMigrateLater": "You can migrate subscribers later if needed",
+    "confirmVersionButton": "Create New Version",
+    "versionSuccessTitle": "New Version Created!",
+    "versionSuccessDescription": "Your plan has been successfully versioned.",
+    "versionDetailsTitle": "Version Details",
+    "versionOldPlanId": "Old Plan ID",
+    "versionNewPlanId": "New Plan ID",
+    "versionExistingSubscribers": "Existing Subscribers",
+    "versionExistingSubsMessage": "Subscribers on plan # will remain on the old version until you migrate them.",
+    "viewNewVersion": "View New Version"
   }
 }

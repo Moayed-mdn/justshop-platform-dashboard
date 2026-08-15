@@ -237,7 +237,7 @@ tbody tr:hover {
 
 /* Focus states for accessibility */
 input:focus,
-button:focus,
+button:focus:not([data-dialog-close]),
 select:focus,
 textarea:focus,
 a:focus {
@@ -389,7 +389,7 @@ thead::after {
 }
 
 /* Button hover lift effect */
-button:not(:disabled):hover {
+button:not(:disabled):not([data-dialog-close]):hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.15);
 }

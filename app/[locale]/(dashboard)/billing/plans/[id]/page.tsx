@@ -121,8 +121,19 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       setName(plan.name);
       setDescription(plan.description || { en: '', ar: '' });
       
-      // plan.tier is guaranteed to be a valid PlanTier by the type system
-      setTier(plan.tier);
+      // Validate and repair tier if corrupted - don't trust API response blindly
+      const validTier = TIER_METADATA.some(tm => tm.value === plan.tier) 
+        ? plan.tier 
+        : 'starter'; // fallback to starter if invalid
+      
+      if (validTier !== plan.tier) {
+        console.warn('[Plan Detail] Invalid tier from API, falling back:', {
+          received: plan.tier,
+          fallback: validTier,
+        });
+      }
+      
+      setTier(validTier);
       setTierRank(plan.tier_rank);
       setIsPublic(plan.is_public);
       setIsActive(plan.is_active);
@@ -289,8 +300,12 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       return;
     }
 
-    // tier is guaranteed to be a valid PlanTier by the type system
-    // No validation needed as TypeScript ensures type safety
+    // Frontend guard: don't trust state blindly, validate tier explicitly
+    if (!TIER_METADATA.some(tm => tm.value === tier)) {
+      toast.error(t('selectTier') || 'Please select a valid tier');
+      console.error('[handleSubmit] Invalid tier state:', tier);
+      return;
+    }
 
     // Build update data
     const featuresArray = FEATURE_METADATA.map((fm) => {
@@ -509,7 +524,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                   </Label>
                   <Select 
                     key={`tier-select-${plan.id}`}
-                    value={tier || 'starter'} 
+                    value={tier} 
                     onValueChange={(v) => handleTierChange(v as PlanTier)}
                   >
                     <SelectTrigger id="tier">
@@ -972,20 +987,19 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Plan Version?</DialogTitle>
+            <DialogTitle>{t('confirmVersionTitle')}</DialogTitle>
             <DialogDescription>
-              You are about to make breaking changes to a plan with active subscribers.
-              This will create a <strong>new plan version</strong>.
+              {t('confirmVersionDescription')} <strong>{t('confirmVersionDescriptionBold')}</strong>.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-4">
-            <p className="text-sm">What will happen:</p>
+            <p className="text-sm">{t('versionWhatHappens')}</p>
             <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-              <li>A new plan will be created with your changes</li>
-              <li>The current plan will be archived and marked as superseded</li>
-              <li>Existing subscribers will remain on the current plan</li>
-              <li>New subscriptions will use the new version</li>
-              <li>You can migrate subscribers later using the Migration Tool</li>
+              <li>{t('versionNewPlan')}</li>
+              <li>{t('versionArchiveCurrent')}</li>
+              <li>{t('versionSubscribersStay')}</li>
+              <li>{t('versionNewSubs')}</li>
+              <li>{t('versionMigrateLater')}</li>
             </ul>
           </div>
           <DialogFooter>
@@ -993,10 +1007,10 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={handleConfirmVersioning}>
-              Yes, Create New Version
+              {t('confirmVersionButton')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1006,37 +1020,36 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       <Dialog open={versionModalOpen} onOpenChange={setVersionModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>✅ New Version Created Successfully!</DialogTitle>
+            <DialogTitle>{t('versionSuccessTitle')}</DialogTitle>
             <DialogDescription>
-              Your plan has been versioned due to breaking changes.
+              {t('versionSuccessDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="p-4 bg-muted rounded-lg space-y-2">
-              <p className="text-sm font-medium">Version Details:</p>
+              <p className="text-sm font-medium">{t('versionDetailsTitle')}</p>
               <ul className="text-sm space-y-1">
                 <li>
-                  <strong>Old Plan ID:</strong> #{versionResult?.meta?.original_plan_id}
-                  <Badge variant="secondary" className="ml-2">Archived</Badge>
+                  <strong>{t('versionOldPlanId')}</strong> #{versionResult?.meta?.original_plan_id}
+                  <Badge variant="secondary" className="ml-2">{t('archived')}</Badge>
                 </li>
                 <li>
-                  <strong>New Plan ID:</strong> #{versionResult?.meta?.new_plan_id}
-                  <Badge variant="default" className="ml-2">Active</Badge>
+                  <strong>{t('versionNewPlanId')}</strong> #{versionResult?.meta?.new_plan_id}
+                  <Badge variant="default" className="ml-2">{t('active')}</Badge>
                 </li>
               </ul>
             </div>
             <Alert>
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Existing Subscribers</AlertTitle>
+              <AlertTitle>{t('versionExistingSubscribers')}</AlertTitle>
               <AlertDescription>
-                Existing subscribers remain on the old plan (#{versionResult?.meta?.original_plan_id}).
-                Use the Migration Tool to move them to the new version.
+                {t('versionExistingSubsMessage').replace('#', `#${versionResult?.meta?.original_plan_id}`)}
               </AlertDescription>
             </Alert>
           </div>
           <DialogFooter>
             <Button onClick={handleVersionModalClose}>
-              View New Version
+              {t('viewNewVersion')}
             </Button>
           </DialogFooter>
         </DialogContent>
