@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Plus,
   Search,
@@ -63,6 +63,8 @@ export default function PagesListPage() {
   const locale = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTranslations('cms.marketingPages');
+  const tCommon = useTranslations('common');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<ContentStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = React.useState<MarketingPageType | 'all'>('all');
@@ -87,7 +89,7 @@ export default function PagesListPage() {
   const totalPages = data?.meta?.last_page ?? 1;
 
   const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+    if (!confirm(t('confirmDeletePage', { title }))) return;
 
     try {
       await cmsEndpoints.deletePage(id);
@@ -101,10 +103,10 @@ export default function PagesListPage() {
           },
         };
       });
-      toast.success('Page deleted successfully');
+      toast.success(t('pageDeletedSuccess'));
     } catch (error) {
       console.error('Failed to delete page:', error);
-      toast.error('Failed to delete page. Please try again.');
+      toast.error(t('pageDeletedError'));
     }
   };
 
@@ -131,15 +133,15 @@ export default function PagesListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Marketing Pages</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage platform marketing pages with type categorization
+            {t('subtitle')}
           </p>
         </div>
         <Link href={`/${locale}/cms/pages/new`}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Create Page
+            {t('createPage')}
           </Button>
         </Link>
       </div>
@@ -153,7 +155,7 @@ export default function PagesListPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search pages by title or slug..."
+                  placeholder={t('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -174,10 +176,10 @@ export default function PagesListPage() {
             >
               <SelectTrigger className="w-full sm:w-[200px]">
                 <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Filter by type" />
+                <SelectValue placeholder={t('filterByType')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">{t('allTypes')}</SelectItem>
                 {MARKETING_PAGE_TYPES.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
@@ -195,13 +197,13 @@ export default function PagesListPage() {
               }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('filterByStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="all">{t('allStatus')}</SelectItem>
+                <SelectItem value="published">{tCommon('published')}</SelectItem>
+                <SelectItem value="draft">{tCommon('draft')}</SelectItem>
+                <SelectItem value="scheduled">{t('scheduled')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -213,45 +215,45 @@ export default function PagesListPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Pages ({pages.length})
+            {t('tableTitle', { count: pages.length })}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading && pages.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Loading pages...
+              {t('loadingPages')}
             </div>
           ) : pages.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No pages found</p>
+              <p>{t('noPagesFound')}</p>
               <p className="text-sm mt-2">
                 {searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'Create your first marketing page'}
+                  ? t('tryAdjustingFilters')
+                  : t('createFirstPage')}
               </p>
             </div>
           ) : (
             <>
               {isFetching && (
-                <div className="mb-3 text-sm text-muted-foreground">Refreshing pages...</div>
+                <div className="mb-3 text-sm text-muted-foreground">{t('refreshingPages')}</div>
               )}
               <div className="rounded-[var(--radius-md)] overflow-hidden [box-shadow:var(--shadow-sm)]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Slug</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Template</TableHead>
-                      <TableHead>Updated</TableHead>
-                      <TableHead className="text-end">Actions</TableHead>
+                      <TableHead>{t('titleColumn')}</TableHead>
+                      <TableHead>{t('typeColumn')}</TableHead>
+                      <TableHead>{t('slugColumn')}</TableHead>
+                      <TableHead>{t('statusColumn')}</TableHead>
+                      <TableHead>{t('templateColumn')}</TableHead>
+                      <TableHead>{t('updatedColumn')}</TableHead>
+                      <TableHead className="text-end">{t('actionsColumn')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pages.map((page) => {
-                      const title = resolveLocalizedString(page.title, locale, 'Untitled');
+                      const title = resolveLocalizedString(page.title, locale, t('untitled'));
                       const slug = resolveLocalizedString(page.slug, locale, '-');
                       const typeInfo = getTypeInfo(page.type);
 
@@ -295,7 +297,7 @@ export default function PagesListPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() =>
@@ -303,7 +305,7 @@ export default function PagesListPage() {
                                   }
                                 >
                                   <Eye className="me-2 h-4 w-4" />
-                                  View
+                                  {tCommon('view')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() =>
@@ -311,7 +313,7 @@ export default function PagesListPage() {
                                   }
                                 >
                                   <Edit className="me-2 h-4 w-4" />
-                                  Edit
+                                  {tCommon('edit')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -319,7 +321,7 @@ export default function PagesListPage() {
                                   onClick={() => handleDelete(page.id, title)}
                                 >
                                   <Trash2 className="me-2 h-4 w-4" />
-                                  Delete
+                                  {tCommon('delete')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -342,10 +344,10 @@ export default function PagesListPage() {
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
-                Previous
+                {tCommon('previous')}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
+                {tCommon('page')} {currentPage} {tCommon('of')} {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -353,7 +355,7 @@ export default function PagesListPage() {
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
               >
-                Next
+                {tCommon('next')}
               </Button>
             </div>
           )}

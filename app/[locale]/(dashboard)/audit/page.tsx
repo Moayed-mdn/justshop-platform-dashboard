@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Activity,
   Download,
@@ -41,6 +41,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 
 export default function AuditLogsPage() {
   const locale = useLocale();
+  const t = useTranslations('audit');
 
   const [logs, setLogs] = React.useState<AuditLog[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -172,26 +173,26 @@ export default function AuditLogsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Audit Logs</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Track all platform activities and user actions
+            {t('subtitle')}
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              Export
+              {t('export')}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('exportFormat')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => handleExport('csv')}>
-              Export as CSV
+              {t('exportCSV')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExport('json')}>
-              Export as JSON
+              {t('exportJSON')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -200,7 +201,7 @@ export default function AuditLogsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <SearchInput
-          placeholder="Search activities..."
+          placeholder={t('searchPlaceholder')}
           onSearch={handleSearch}
           className="w-full sm:w-80"
         />
@@ -213,18 +214,18 @@ export default function AuditLogsPage() {
             }
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All Actions" />
+              <SelectValue placeholder={t('allActions')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Actions</SelectItem>
-              <SelectItem value="created">Created</SelectItem>
-              <SelectItem value="updated">Updated</SelectItem>
-              <SelectItem value="deleted">Deleted</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-              <SelectItem value="activated">Activated</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="login">Login</SelectItem>
-              <SelectItem value="logout">Logout</SelectItem>
+              <SelectItem value="all">{t('allActions')}</SelectItem>
+              <SelectItem value="created">{t('actions.created')}</SelectItem>
+              <SelectItem value="updated">{t('actions.updated')}</SelectItem>
+              <SelectItem value="deleted">{t('actions.deleted')}</SelectItem>
+              <SelectItem value="suspended">{t('actions.suspended')}</SelectItem>
+              <SelectItem value="activated">{t('actions.activated')}</SelectItem>
+              <SelectItem value="published">{t('actions.published')}</SelectItem>
+              <SelectItem value="login">{t('actions.login')}</SelectItem>
+              <SelectItem value="logout">{t('actions.logout')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -235,16 +236,16 @@ export default function AuditLogsPage() {
             }
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All Resources" />
+              <SelectValue placeholder={t('allResources')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Resources</SelectItem>
-              <SelectItem value="user">Users</SelectItem>
-              <SelectItem value="store">Stores</SelectItem>
-              <SelectItem value="blog_post">Blog Posts</SelectItem>
-              <SelectItem value="page">Pages</SelectItem>
-              <SelectItem value="documentation">Documentation</SelectItem>
-              <SelectItem value="system">System</SelectItem>
+              <SelectItem value="all">{t('allResources')}</SelectItem>
+              <SelectItem value="user">{t('resources.user')}</SelectItem>
+              <SelectItem value="store">{t('resources.store')}</SelectItem>
+              <SelectItem value="blog_post">{t('resources.blog_post')}</SelectItem>
+              <SelectItem value="page">{t('resources.page')}</SelectItem>
+              <SelectItem value="documentation">{t('resources.documentation')}</SelectItem>
+              <SelectItem value="system">{t('resources.system')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -253,7 +254,7 @@ export default function AuditLogsPage() {
       {/* Activity Timeline */}
       {loading ? (
         <div className="rounded-md border p-8 text-center">
-          <div className="text-muted-foreground">Loading audit logs...</div>
+          <div className="text-muted-foreground">{t('loading')}</div>
         </div>
       ) : (
         <>
@@ -305,7 +306,7 @@ export default function AuditLogsPage() {
 
                         {log.changes && log.changes.length > 0 && (
                           <div className="text-xs text-muted-foreground bg-muted/50 rounded-md p-2">
-                            <div className="font-medium mb-1">Changes:</div>
+                            <div className="font-medium mb-1">{t('changes')}:</div>
                             {log.changes.map((change, idx) => (
                               <div key={idx}>
                                 <span className="font-medium">{change.field}</span>:{' '}
@@ -339,9 +340,11 @@ export default function AuditLogsPage() {
           {meta.last_page > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Showing {(meta.current_page - 1) * meta.per_page + 1} to{' '}
-                {Math.min(meta.current_page * meta.per_page, meta.total)} of{' '}
-                {meta.total} activities
+                {t('showingActivities', {
+                  from: (meta.current_page - 1) * meta.per_page + 1,
+                  to: Math.min(meta.current_page * meta.per_page, meta.total),
+                  total: meta.total,
+                })}
               </div>
               <Pagination
                 currentPage={meta.current_page}

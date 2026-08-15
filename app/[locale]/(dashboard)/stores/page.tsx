@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { 
   Eye, 
   Ban, 
@@ -43,6 +43,8 @@ import { formatDistanceToNow } from 'date-fns';
 export default function StoresPage() {
   const locale = useLocale();
   const queryClient = useQueryClient();
+  const t = useTranslations('stores');
+  const tCommon = useTranslations('common');
 
   const [filters, setFilters] = React.useState<StoreFilters>({
     page: 1,
@@ -115,7 +117,7 @@ export default function StoresPage() {
 
   // Handle delete
   const handleDelete = async (storeId: number) => {
-    if (!confirm('Are you sure you want to delete this store? This action cannot be undone.')) return;
+    if (!confirm(t('confirmDelete'))) return;
 
     try {
       await storesEndpoints.deleteStore(storeId);
@@ -165,7 +167,7 @@ export default function StoresPage() {
   const columns: Column<Store>[] = [
     {
       key: 'store',
-      label: 'Store',
+      label: tCommon('common'),
       sortable: true,
       render: (store) => (
         <div className="flex items-center gap-3">
@@ -182,7 +184,7 @@ export default function StoresPage() {
     },
     {
       key: 'owner',
-      label: 'Owner',
+      label: t('owner'),
       sortable: true,
       render: (store) => (
         <div className="flex items-center gap-2">
@@ -193,7 +195,7 @@ export default function StoresPage() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-sm font-medium">{store.owner?.name ?? 'Unassigned'}</div>
+            <div className="text-sm font-medium">{store.owner?.name ?? t('unassigned')}</div>
             <div className="text-xs text-muted-foreground">{store.owner?.email ?? '-'}</div>
           </div>
         </div>
@@ -201,7 +203,7 @@ export default function StoresPage() {
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('status'),
       sortable: true,
       render: (store) => (
         <Badge variant={getStatusVariant(store.status)}>
@@ -211,19 +213,19 @@ export default function StoresPage() {
     },
     {
       key: 'products_count',
-      label: 'Products',
+      label: t('products'),
       sortable: true,
       className: 'text-center',
     },
     {
       key: 'orders_count',
-      label: 'Orders',
+      label: t('orders'),
       sortable: true,
       className: 'text-center',
     },
     {
       key: 'created_at',
-      label: 'Created',
+      label: t('created'),
       sortable: true,
       render: (store) => (
         <span className="text-sm text-muted-foreground">
@@ -233,11 +235,11 @@ export default function StoresPage() {
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('actions'),
       className: 'text-right',
       render: (store) => (
         <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="icon" asChild title="View store">
+          <Button variant="ghost" size="icon" asChild title={t('viewStore')}>
             <Link href={`/${locale}/stores/${store.id}`}>
               <Eye className="h-4 w-4" />
             </Link>
@@ -246,7 +248,7 @@ export default function StoresPage() {
             <Button
               variant="ghost"
               size="icon"
-              title="Suspend store"
+              title={t('suspendStore')}
               onClick={() => handleToggleStatus(store.id, store.status)}
             >
               <Ban className="h-4 w-4" />
@@ -255,7 +257,7 @@ export default function StoresPage() {
             <Button
               variant="ghost"
               size="icon"
-              title="Activate store"
+              title={t('activateStore')}
               onClick={() => handleToggleStatus(store.id, store.status)}
             >
               <CheckCircle className="h-4 w-4" />
@@ -268,24 +270,24 @@ export default function StoresPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/stores/${store.id}`}>
                   <Eye className="mr-2 h-4 w-4" />
-                  View Details
+                  {t('viewDetails')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/stores/${store.id}?edit=true`}>
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit Store
+                  {t('editStore')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a href={`https://${store.domain}`} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  Visit Storefront
+                  {t('visitStorefront')}
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -294,18 +296,18 @@ export default function StoresPage() {
                 {store.status === 'active' ? (
                   <>
                     <Ban className="mr-2 h-4 w-4" />
-                    Suspend Store
+                    {t('suspendStore')}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Activate Store
+                    {t('activateStore')}
                   </>
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                Configure
+                {t('configure')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -313,7 +315,7 @@ export default function StoresPage() {
                 onClick={() => handleDelete(store.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete Store
+                {t('deleteStore')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -326,16 +328,16 @@ export default function StoresPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Stores</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Manage platform stores, configurations, and owners
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput
-          placeholder="Search stores..."
+          placeholder={t('searchPlaceholder')}
           onSearch={handleSearch}
           className="w-full sm:w-80"
         />
@@ -348,14 +350,14 @@ export default function StoresPage() {
             }
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All Status" />
+              <SelectValue placeholder={t('allStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="all">{t('allStatus')}</SelectItem>
+              <SelectItem value="active">{t('active')}</SelectItem>
+              <SelectItem value="pending">{t('pending')}</SelectItem>
+              <SelectItem value="suspended">{t('suspended')}</SelectItem>
+              <SelectItem value="inactive">{t('inactive')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -364,12 +366,12 @@ export default function StoresPage() {
       {/* Table */}
       {isLoading && stores.length === 0 ? (
         <div className="rounded-md border p-8 text-center">
-          <div className="text-muted-foreground">Loading stores...</div>
+          <div className="text-muted-foreground">{t('loadingStores')}</div>
         </div>
       ) : (
         <>
           {isFetching && (
-            <div className="text-sm text-muted-foreground">Refreshing stores...</div>
+            <div className="text-sm text-muted-foreground">{t('refreshingStores')}</div>
           )}
           <DataTable
             columns={columns}
@@ -378,16 +380,18 @@ export default function StoresPage() {
             sortKey={filters.sort}
             sortOrder={filters.order}
             onSort={handleSort}
-            emptyMessage="No stores found"
+            emptyMessage={t('noStoresFound')}
           />
 
           {/* Pagination */}
           {meta.last_page > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Showing {(meta.current_page - 1) * meta.per_page + 1} to{' '}
-                {Math.min(meta.current_page * meta.per_page, meta.total)} of{' '}
-                {meta.total} stores
+                {t('showingStores', {
+                  from: (meta.current_page - 1) * meta.per_page + 1,
+                  to: Math.min(meta.current_page * meta.per_page, meta.total),
+                  total: meta.total,
+                })}
               </div>
               <Pagination
                 currentPage={meta.current_page}

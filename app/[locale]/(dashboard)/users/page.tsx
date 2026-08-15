@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Eye, Ban, CheckCircle, MoreHorizontal, Edit, Trash2, UserCog } from 'lucide-react';
 import { usersEndpoints } from '@/lib/api/endpoints/users';
 import type { User, UserFilters, PaginatedResponse } from '@/lib/types/user';
@@ -34,6 +34,8 @@ import { formatUserRole } from '@/lib/utils';
 export default function UsersPage() {
   const locale = useLocale();
   const queryClient = useQueryClient();
+  const t = useTranslations('users');
+  const tCommon = useTranslations('common');
 
   const [filters, setFilters] = React.useState<UserFilters>({
     page: 1,
@@ -106,7 +108,7 @@ export default function UsersPage() {
 
   // Handle delete
   const handleDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm(t('confirmDelete'))) return;
 
     try {
       await usersEndpoints.deleteUser(userId);
@@ -169,7 +171,7 @@ export default function UsersPage() {
   const columns: Column<User>[] = [
     {
       key: 'user',
-      label: 'User',
+      label: t('role'),
       sortable: true,
       render: (user) => (
         <div className="flex items-center gap-3">
@@ -186,7 +188,7 @@ export default function UsersPage() {
     },
     {
       key: 'role',
-      label: 'Role',
+      label: t('role'),
       sortable: true,
       render: (user) => (
         <Badge variant={getRoleVariant(user.role)}>
@@ -196,7 +198,7 @@ export default function UsersPage() {
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('status'),
       sortable: true,
       render: (user) => (
         <Badge variant={getStatusVariant(user.status)}>
@@ -206,13 +208,13 @@ export default function UsersPage() {
     },
     {
       key: 'stores_count',
-      label: 'Stores',
+      label: t('stores'),
       sortable: true,
       className: 'text-center',
     },
     {
       key: 'created_at',
-      label: 'Joined',
+      label: t('joined'),
       sortable: true,
       render: (user) => (
         <span className="text-sm text-muted-foreground">
@@ -222,11 +224,11 @@ export default function UsersPage() {
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('actions'),
       className: 'text-right',
       render: (user) => (
         <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="icon" asChild title="View user">
+          <Button variant="ghost" size="icon" asChild title={t('viewUser')}>
             <Link href={`/${locale}/users/${user.id}`}>
               <Eye className="h-4 w-4" />
             </Link>
@@ -235,7 +237,7 @@ export default function UsersPage() {
             <Button
               variant="ghost"
               size="icon"
-              title="Suspend user"
+              title={t('suspendUser')}
               onClick={() => handleToggleStatus(user.id, user.status)}
             >
               <Ban className="h-4 w-4" />
@@ -244,7 +246,7 @@ export default function UsersPage() {
             <Button
               variant="ghost"
               size="icon"
-              title="Activate user"
+              title={t('activateUser')}
               onClick={() => handleToggleStatus(user.id, user.status)}
             >
               <CheckCircle className="h-4 w-4" />
@@ -257,18 +259,18 @@ export default function UsersPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>{tCommon('actions')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/users/${user.id}`}>
                   <Eye className="mr-2 h-4 w-4" />
-                  View Details
+                  {t('viewDetails')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/users/${user.id}?edit=true`}>
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit User
+                  {t('editUser')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -277,18 +279,18 @@ export default function UsersPage() {
                 {user.status === 'active' ? (
                   <>
                     <Ban className="mr-2 h-4 w-4" />
-                    Suspend User
+                    {t('suspendUser')}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Activate User
+                    {t('activateUser')}
                   </>
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <UserCog className="mr-2 h-4 w-4" />
-                Change Role
+                {t('changeRole')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -296,7 +298,7 @@ export default function UsersPage() {
                 onClick={() => handleDelete(user.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete User
+                {t('deleteUser')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -309,16 +311,16 @@ export default function UsersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Users</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Manage platform users, roles, and permissions
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput
-          placeholder="Search users..."
+          placeholder={t('searchPlaceholder')}
           onSearch={handleSearch}
           className="w-full sm:w-80"
         />
@@ -331,14 +333,14 @@ export default function UsersPage() {
             }
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All Roles" />
+              <SelectValue placeholder={t('allRoles')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="store_admin">Store Admin</SelectItem>
-              <SelectItem value="staff">Staff</SelectItem>
-              <SelectItem value="customer">Customer</SelectItem>
+              <SelectItem value="all">{t('allRoles')}</SelectItem>
+              <SelectItem value="super_admin">{t('superAdmin')}</SelectItem>
+              <SelectItem value="store_admin">{t('storeAdmin')}</SelectItem>
+              <SelectItem value="staff">{t('staff')}</SelectItem>
+              <SelectItem value="customer">{t('customer')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -349,13 +351,13 @@ export default function UsersPage() {
             }
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All Status" />
+              <SelectValue placeholder={t('allStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="all">{t('allStatus')}</SelectItem>
+              <SelectItem value="active">{t('active')}</SelectItem>
+              <SelectItem value="suspended">{t('suspended')}</SelectItem>
+              <SelectItem value="inactive">{t('inactive')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -364,12 +366,12 @@ export default function UsersPage() {
       {/* Table */}
       {isLoading && users.length === 0 ? (
         <div className="rounded-md border p-8 text-center">
-          <div className="text-muted-foreground">Loading users...</div>
+          <div className="text-muted-foreground">{t('loadingUsers')}</div>
         </div>
       ) : (
         <>
           {isFetching && (
-            <div className="text-sm text-muted-foreground">Refreshing users...</div>
+            <div className="text-sm text-muted-foreground">{t('refreshingUsers')}</div>
           )}
           <DataTable
             columns={columns}
@@ -378,16 +380,18 @@ export default function UsersPage() {
             sortKey={filters.sort}
             sortOrder={filters.order}
             onSort={handleSort}
-            emptyMessage="No users found"
+            emptyMessage={t('noUsersFound')}
           />
 
           {/* Pagination */}
           {meta.last_page > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Showing {(meta.current_page - 1) * meta.per_page + 1} to{' '}
-                {Math.min(meta.current_page * meta.per_page, meta.total)} of{' '}
-                {meta.total} users
+                {t('showingUsers', {
+                  from: (meta.current_page - 1) * meta.per_page + 1,
+                  to: Math.min(meta.current_page * meta.per_page, meta.total),
+                  total: meta.total,
+                })}
               </div>
               <Pagination
                 currentPage={meta.current_page}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Users, Store, DollarSign, ShoppingCart, TrendingUp, AlertCircle, Receipt, CreditCard } from 'lucide-react';
 import { useDashboardUser } from '@/components/dashboard/dashboard-layout-client';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -16,6 +17,9 @@ export default function HomePage() {
   const user = useDashboardUser();
   const pathname = usePathname();
   const locale = pathname?.split('/')[1] || 'en';
+  const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [userGrowth, setUserGrowth] = useState<TimeSeriesData | null>(null);
   const [storeGrowth, setStoreGrowth] = useState<TimeSeriesData | null>(null);
@@ -40,7 +44,7 @@ export default function HomePage() {
         setStoreGrowth(storeGrowthData);
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        setError(err instanceof Error ? err.message : tErrors('failedToLoadDashboard'));
       } finally {
         setLoading(false);
       }
@@ -69,7 +73,7 @@ export default function HomePage() {
             <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-red-900 dark:text-red-100">
-                Failed to Load Dashboard Data
+                {tErrors('failedToLoadDashboard')}
               </p>
               <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                 {error}
@@ -82,50 +86,50 @@ export default function HomePage() {
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          {loading ? 'Welcome!' : `Welcome, ${user?.name || 'User'}! 👋`}
+          {loading ? t('welcome') : t('welcomeUser', { name: user?.name || tCommon('user') })}
         </h1>
         <p className="text-muted-foreground mt-2">
-          {loading ? 'Platform Dashboard' : `Here's what's happening with your platform today.`}
+          {loading ? t('platformDashboard') : t('subtitle')}
         </p>
       </div>
 
       {/* Store Activity Section */}
       <div>
-        <h2 className="text-2xl font-semibold mb-4">Store Activity</h2>
+        <h2 className="text-2xl font-semibold mb-4">{t('storeActivity')}</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Total Users"
+            title={t('totalUsers')}
             value={stats ? formatNumber(stats.users.total) : '0'}
             change={stats?.users.growth_percentage}
             trend={stats && stats.users.growth_percentage > 0 ? 'up' : stats && stats.users.growth_percentage < 0 ? 'down' : undefined}
             icon={Users}
-            description="from last month"
+            description={t('fromLastMonth')}
             loading={loading}
           />
           <StatCard
-            title="Active Stores"
+            title={t('activeStores')}
             value={stats ? formatNumber(stats.stores.active) : '0'}
             change={undefined}
             icon={Store}
-            description={stats ? `${stats.stores.total} total` : ''}
+            description={stats ? t('totalStoresText', { count: stats.stores.total }) : ''}
             loading={loading}
           />
           <StatCard
-            title="Store Sales (GMV)"
+            title={t('storeSales')}
             value={stats ? formatCurrency(stats.revenue.total) : '$0'}
             change={stats?.revenue.growth_percentage}
             trend={stats && stats.revenue.growth_percentage > 0 ? 'up' : stats && stats.revenue.growth_percentage < 0 ? 'down' : undefined}
             icon={DollarSign}
-            description="all time order volume"
+            description={t('allTimeOrderVolume')}
             loading={loading}
           />
           <StatCard
-            title="Orders"
+            title={t('orders')}
             value={stats ? formatNumber(stats.orders.total) : '0'}
             change={stats?.orders.growth_percentage}
             trend={stats && stats.orders.growth_percentage && stats.orders.growth_percentage > 0 ? 'up' : stats && stats.orders.growth_percentage && stats.orders.growth_percentage < 0 ? 'down' : undefined}
             icon={ShoppingCart}
-            description={stats ? `${stats.orders.pending} pending` : 'from last month'}
+            description={stats ? t('pendingOrders', { count: stats.orders.pending }) : t('fromLastMonth')}
             loading={loading}
           />
         </div>
@@ -135,46 +139,46 @@ export default function HomePage() {
       {stats?.subscription_revenue && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Platform Revenue</h2>
+            <h2 className="text-2xl font-semibold">{t('platformRevenue')}</h2>
             <Button variant="outline" asChild>
               <Link href={`/${locale}/billing/subscriptions`}>
                 <Receipt className="mr-2 h-4 w-4" />
-                View All Subscriptions
+                {t('viewAllSubscriptions')}
               </Link>
             </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              title="Subscription Revenue"
+              title={t('subscriptionRevenue')}
               value={formatCurrency(stats.subscription_revenue.total)}
               change={stats.subscription_revenue.trend.change}
               trend={stats.subscription_revenue.trend.direction}
               icon={CreditCard}
-              description="SaaS income"
+              description={t('saasIncome')}
               loading={loading}
             />
             <StatCard
-              title="Active Subscriptions"
+              title={t('activeSubscriptions')}
               value={stats.subscriptions ? formatNumber(stats.subscriptions.active) : '0'}
               change={undefined}
               icon={Receipt}
-              description={stats.subscriptions ? `${stats.subscriptions.total} total` : ''}
+              description={stats.subscriptions ? t('totalStoresText', { count: stats.subscriptions.total }) : ''}
               loading={loading}
             />
             <StatCard
-              title="Trialing"
+              title={t('trialing')}
               value={stats.subscriptions ? formatNumber(stats.subscriptions.trialing) : '0'}
               change={undefined}
               icon={Users}
-              description="trial period"
+              description={t('trialPeriod')}
               loading={loading}
             />
             <StatCard
-              title="Past Due"
+              title={t('pastDue')}
               value={stats.subscriptions ? formatNumber(stats.subscriptions.past_due) : '0'}
               change={undefined}
               icon={AlertCircle}
-              description="requires attention"
+              description={t('requiresAttention')}
               loading={loading}
             />
           </div>
@@ -184,14 +188,14 @@ export default function HomePage() {
       {/* Charts Row */}
       <div className="grid gap-4 md:grid-cols-2">
         <LineChart
-          title="User Growth"
-          description="New user registrations over the last 30 days"
+          title={t('userGrowth')}
+          description={t('userGrowthDescription')}
           data={userGrowth?.data || []}
           loading={loading}
         />
         <LineChart
-          title="Store Growth"
-          description="New stores created over the last 30 days"
+          title={t('storeGrowth')}
+          description={t('storeGrowthDescription')}
           data={storeGrowth?.data || []}
           loading={loading}
         />
@@ -207,53 +211,53 @@ export default function HomePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Platform Overview
+                    {t('platformOverview')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Users</p>
+                      <p className="text-sm text-muted-foreground">{t('totalUsers')}</p>
                       <p className="text-2xl font-bold">{formatNumber(stats.users.total)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatNumber(stats.users.active)} active users
+                        {t('activeUsers', { count: formatNumber(stats.users.active) })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Stores</p>
+                      <p className="text-sm text-muted-foreground">{t('totalStores')}</p>
                       <p className="text-2xl font-bold">{formatNumber(stats.stores.total)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatNumber(stats.stores.active)} active stores
+                        {t('activeStoresCount', { count: formatNumber(stats.stores.active) })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Store Sales (GMV)</p>
+                      <p className="text-sm text-muted-foreground">{t('storeSalesGmv')}</p>
                       <p className="text-2xl font-bold">{formatCurrency(stats.revenue.total)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Order volume (not platform income)
+                        {t('orderVolumeNote')}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Orders</p>
+                      <p className="text-sm text-muted-foreground">{t('totalOrders')}</p>
                       <p className="text-2xl font-bold">{formatNumber(stats.orders.total)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatNumber(stats.orders.pending)} pending orders
+                        {t('pendingOrdersCount', { count: formatNumber(stats.orders.pending) })}
                       </p>
                     </div>
                     {stats.subscription_revenue && (
                       <>
                         <div>
-                          <p className="text-sm text-muted-foreground">Subscription Revenue</p>
+                          <p className="text-sm text-muted-foreground">{t('subscriptionRevenue')}</p>
                           <p className="text-2xl font-bold">{formatCurrency(stats.subscription_revenue.total)}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Actual platform SaaS income
+                            {t('actualPlatformIncome')}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Total Subscriptions</p>
+                          <p className="text-sm text-muted-foreground">{t('totalSubscriptions')}</p>
                           <p className="text-2xl font-bold">{stats.subscriptions ? formatNumber(stats.subscriptions.total) : '0'}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {stats.subscriptions ? formatNumber(stats.subscriptions.active) : '0'} active subscriptions
+                            {stats.subscriptions ? t('activeSubscriptionsCount', { count: formatNumber(stats.subscriptions.active) }) : '0'}
                           </p>
                         </div>
                       </>
@@ -270,14 +274,14 @@ export default function HomePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5" />
-                  Store Status
+                  {t('storeStatus')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm">Active</span>
+                      <span className="text-sm">{tCommon('status.active')}</span>
                       <span className="text-sm font-semibold">{stats.stores.active}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
@@ -289,7 +293,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm">Pending</span>
+                      <span className="text-sm">{tCommon('status.pending')}</span>
                       <span className="text-sm font-semibold">{stats.stores.pending}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
@@ -301,7 +305,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm">Suspended</span>
+                      <span className="text-sm">{tCommon('status.suspended')}</span>
                       <span className="text-sm font-semibold">{stats.stores.suspended}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
@@ -321,14 +325,14 @@ export default function HomePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
-                    Subscription Status
+                    {t('subscriptionStatus')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Active</span>
+                        <span className="text-sm">{tCommon('status.active')}</span>
                         <span className="text-sm font-semibold">{stats.subscriptions.active}</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -340,7 +344,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Trialing</span>
+                        <span className="text-sm">{t('trialing')}</span>
                         <span className="text-sm font-semibold">{stats.subscriptions.trialing}</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -352,7 +356,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Past Due</span>
+                        <span className="text-sm">{t('pastDue')}</span>
                         <span className="text-sm font-semibold">{stats.subscriptions.past_due}</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -364,7 +368,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm">Canceled</span>
+                        <span className="text-sm">{t('canceled')}</span>
                         <span className="text-sm font-semibold">{stats.subscriptions.canceled}</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">

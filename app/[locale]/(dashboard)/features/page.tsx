@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import { Plus, Trash2 } from 'lucide-react';
 import { featureFlagsEndpoints } from '@/lib/api/endpoints/feature-flags';
 import type { FeatureFlag, FeatureFlagFilters } from '@/lib/types/feature-flag';
@@ -25,6 +26,7 @@ const ALL_TARGETS = '__all_targets__';
 
 export default function FeatureFlagsPage() {
   const queryClient = useQueryClient();
+  const t = useTranslations('features');
   const [filters, setFilters] = React.useState<FeatureFlagFilters>({
     page: 1,
     per_page: 20,
@@ -86,7 +88,7 @@ export default function FeatureFlagsPage() {
 
   // Handle delete
   const handleDelete = async (flagId: number) => {
-    if (!confirm('Are you sure you want to delete this feature flag?')) return;
+    if (!confirm(t('confirmDelete'))) return;
 
     try {
       await featureFlagsEndpoints.deleteFeatureFlag(flagId);
@@ -109,17 +111,17 @@ export default function FeatureFlagsPage() {
   const getTargetBadge = (flag: FeatureFlag) => {
     switch (flag.target_type) {
       case 'all':
-        return <Badge variant="default">All Users</Badge>;
+        return <Badge variant="default">{t('allUsers')}</Badge>;
       case 'percentage':
         return (
           <Badge variant="info">
-            {flag.target_value}% Rollout
+            {t('percentageRollout', { value: flag.target_value })}
           </Badge>
         );
       case 'users':
-        return <Badge variant="secondary">Specific Users</Badge>;
+        return <Badge variant="secondary">{t('specificUsers')}</Badge>;
       case 'stores':
-        return <Badge variant="secondary">Specific Stores</Badge>;
+        return <Badge variant="secondary">{t('specificStores')}</Badge>;
       default:
         return null;
     }
@@ -140,7 +142,7 @@ export default function FeatureFlagsPage() {
   const columns: Column<FeatureFlag>[] = [
     {
       key: 'enabled',
-      label: 'Status',
+      label: t('status'),
       render: (flag) => (
         <Switch
           checked={flag.enabled}
@@ -150,7 +152,7 @@ export default function FeatureFlagsPage() {
     },
     {
       key: 'name',
-      label: 'Feature',
+      label: t('feature'),
       sortable: true,
       render: (flag) => (
         <div>
@@ -161,7 +163,7 @@ export default function FeatureFlagsPage() {
     },
     {
       key: 'description',
-      label: 'Description',
+      label: t('description'),
       render: (flag) => (
         <p className="text-sm text-muted-foreground max-w-md truncate">
           {flag.description}
@@ -170,17 +172,17 @@ export default function FeatureFlagsPage() {
     },
     {
       key: 'target_type',
-      label: 'Target',
+      label: t('target'),
       render: (flag) => getTargetBadge(flag),
     },
     {
       key: 'environment',
-      label: 'Environment',
+      label: t('environment'),
       render: (flag) => getEnvironmentBadge(flag.environment),
     },
     {
       key: 'usage_count',
-      label: 'Usage',
+      label: t('usage'),
       sortable: true,
       className: 'text-right',
       render: (flag) => (
@@ -189,7 +191,7 @@ export default function FeatureFlagsPage() {
     },
     {
       key: 'updated_at',
-      label: 'Updated',
+      label: t('updated'),
       sortable: true,
       render: (flag) => (
         <span className="text-sm text-muted-foreground">
@@ -199,7 +201,7 @@ export default function FeatureFlagsPage() {
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: t('actions'),
       className: 'text-right',
       render: (flag) => (
         <Button
@@ -218,21 +220,21 @@ export default function FeatureFlagsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Feature Flags</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Control feature rollouts and A/B testing
+            {t('subtitle')}
           </p>
         </div>
-        <Button onClick={() => alert('Create Feature Flag - Coming soon!')}>
+        <Button onClick={() => alert(t('createComingSoon'))}>
           <Plus className="mr-2 h-4 w-4" />
-          Create Flag
+          {t('createFlag')}
         </Button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <SearchInput
-          placeholder="Search features..."
+          placeholder={t('searchPlaceholder')}
           onSearch={handleSearch}
           className="w-full sm:w-80"
         />
@@ -245,12 +247,12 @@ export default function FeatureFlagsPage() {
             }
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="All Status" />
+              <SelectValue placeholder={t('allStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="enabled">Enabled</SelectItem>
-              <SelectItem value="disabled">Disabled</SelectItem>
+              <SelectItem value="all">{t('allStatus')}</SelectItem>
+              <SelectItem value="enabled">{t('enabled')}</SelectItem>
+              <SelectItem value="disabled">{t('disabled')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -261,13 +263,13 @@ export default function FeatureFlagsPage() {
             }
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All Environments" />
+              <SelectValue placeholder={t('allEnvironments')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Environments</SelectItem>
-              <SelectItem value="production">Production</SelectItem>
-              <SelectItem value="staging">Staging</SelectItem>
-              <SelectItem value="development">Development</SelectItem>
+              <SelectItem value="all">{t('allEnvironments')}</SelectItem>
+              <SelectItem value="production">{t('production')}</SelectItem>
+              <SelectItem value="staging">{t('staging')}</SelectItem>
+              <SelectItem value="development">{t('development')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -278,14 +280,14 @@ export default function FeatureFlagsPage() {
             }
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All Targets" />
+              <SelectValue placeholder={t('allTargets')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_TARGETS}>All Targets</SelectItem>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="percentage">Percentage</SelectItem>
-              <SelectItem value="users">Specific Users</SelectItem>
-              <SelectItem value="stores">Specific Stores</SelectItem>
+              <SelectItem value={ALL_TARGETS}>{t('allTargets')}</SelectItem>
+              <SelectItem value="all">{t('allUsers')}</SelectItem>
+              <SelectItem value="percentage">{t('percentage')}</SelectItem>
+              <SelectItem value="users">{t('specificUsers')}</SelectItem>
+              <SelectItem value="stores">{t('specificStores')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -294,28 +296,30 @@ export default function FeatureFlagsPage() {
       {/* Table */}
       {isLoading && flags.length === 0 ? (
         <div className="rounded-md border p-8 text-center">
-          <div className="text-muted-foreground">Loading feature flags...</div>
+          <div className="text-muted-foreground">{t('loading')}</div>
         </div>
       ) : (
         <>
           {isFetching && (
-            <div className="text-sm text-muted-foreground">Refreshing feature flags...</div>
+            <div className="text-sm text-muted-foreground">{t('refreshing')}</div>
           )}
           <DataTable
             columns={columns}
             data={flags}
             keyExtractor={(flag) => flag.id}
             onSort={() => handleSort()}
-            emptyMessage="No feature flags found"
+            emptyMessage={t('noFlags')}
           />
 
           {/* Pagination */}
           {meta.last_page > 1 && (
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                Showing {(meta.current_page - 1) * meta.per_page + 1} to{' '}
-                {Math.min(meta.current_page * meta.per_page, meta.total)} of{' '}
-                {meta.total} flags
+                {t('showingFlags', {
+                  from: (meta.current_page - 1) * meta.per_page + 1,
+                  to: Math.min(meta.current_page * meta.per_page, meta.total),
+                  total: meta.total,
+                })}
               </div>
               <Pagination
                 currentPage={meta.current_page}
