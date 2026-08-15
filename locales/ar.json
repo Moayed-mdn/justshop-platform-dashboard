@@ -42,6 +42,11 @@
     "filterBy": "تصفية حسب",
     "published": "منشور",
     "draft": "مسودة",
+    "chartWillAppear": "سيظهر المخطط بمجرد جمع البيانات",
+    "pageNotFound": "الصفحة غير موجودة",
+    "pageNotFoundTitle": "الصفحة غير موجودة",
+    "pageNotFoundDescription": "الصفحة التي تبحث عنها غير موجودة.",
+    "backToPages": "العودة إلى الصفحات",
     "status": {
       "active": "نشط",
       "inactive": "غير نشط",
@@ -143,7 +148,8 @@
     "activeSubscriptionsCount": "{count} اشتراك نشط",
     "storeStatus": "حالة المتجر",
     "subscriptionStatus": "حالة الاشتراك",
-    "canceled": "ملغي"
+    "canceled": "ملغي",
+    "totalOrders": "إجمالي الطلبات"
   },
   "users": {
     "title": "المستخدمون",
@@ -172,7 +178,9 @@
     "lastLogin": "آخر تسجيل دخول",
     "never": "أبداً",
     "superAdmin": "مدير المنصة",
+    "super_admin": "مدير المنصة",
     "storeAdmin": "مدير المتجر",
+    "store_admin": "مدير المتجر",
     "staff": "موظف",
     "customer": "عميل",
     "merchant": "تاجر",
@@ -190,7 +198,21 @@
     "confirmDelete": "هل أنت متأكد من حذف هذا المستخدم؟",
     "deleteSuccess": "تم حذف المستخدم بنجاح",
     "updateSuccess": "تم تحديث المستخدم بنجاح",
-    "showingUsers": "عرض {from} إلى {to} من {total} مستخدم"
+    "showingUsers": "عرض {from} إلى {to} من {total} مستخدم",
+    "email": "البريد الإلكتروني",
+    "totalStores": "إجمالي المتاجر",
+    "noRecentActivity": "لا توجد أنشطة حديثة",
+    "activityTypes": {
+      "created": "تم الإنشاء",
+      "updated": "تم التحديث",
+      "deleted": "تم الحذف",
+      "suspended": "تم الإيقاف",
+      "activated": "تم التفعيل",
+      "published": "تم النشر",
+      "archived": "تمت الأرشفة",
+      "login": "تسجيل دخول",
+      "logout": "تسجيل خروج"
+    }
   },
   "stores": {
     "title": "المتاجر",
@@ -243,7 +265,17 @@
     "yes": "نعم",
     "no": "لا",
     "enabled": "مفعل",
-    "disabled": "معطل"
+    "disabled": "معطل",
+    "viewProfile": "عرض الملف الشخصي",
+    "noRecentOrders": "لا توجد طلبات حديثة",
+    "revenue": "الإيرادات",
+    "editStoreComingSoon": "وظيفة تعديل المتجر قريباً",
+    "statusTypes": {
+      "active": "نشط",
+      "suspended": "موقوف",
+      "pending": "قيد الانتظار",
+      "inactive": "غير نشط"
+    }
   },
   "subscriptions": {
     "title": "الاشتراكات",

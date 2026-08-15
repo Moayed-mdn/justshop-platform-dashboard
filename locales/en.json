@@ -42,6 +42,11 @@
     "filterBy": "Filter by",
     "published": "Published",
     "draft": "Draft",
+    "chartWillAppear": "Chart will appear once data is collected",
+    "pageNotFound": "Page not found",
+    "pageNotFoundTitle": "Page Not Found",
+    "pageNotFoundDescription": "The page you are looking for does not exist.",
+    "backToPages": "Back to Pages",
     "status": {
       "active": "Active",
       "inactive": "Inactive",
@@ -144,7 +149,8 @@
     "activeSubscriptionsCount": "{count} active subscriptions",
     "storeStatus": "Store Status",
     "subscriptionStatus": "Subscription Status",
-    "canceled": "Canceled"
+    "canceled": "Canceled",
+    "totalOrders": "Total Orders"
   },
   "users": {
     "title": "Users",
@@ -173,7 +179,9 @@
     "lastLogin": "Last Login",
     "never": "Never",
     "superAdmin": "Super Admin",
+    "super_admin": "Super Admin",
     "storeAdmin": "Store Admin",
+    "store_admin": "Store Admin",
     "staff": "Staff",
     "customer": "Customer",
     "merchant": "Merchant",
@@ -191,7 +199,21 @@
     "confirmDelete": "Are you sure you want to delete this user?",
     "deleteSuccess": "User deleted successfully",
     "updateSuccess": "User updated successfully",
-    "showingUsers": "Showing {from} to {to} of {total} users"
+    "showingUsers": "Showing {from} to {to} of {total} users",
+    "email": "Email",
+    "totalStores": "Total Stores",
+    "noRecentActivity": "No recent activity",
+    "activityTypes": {
+      "created": "Created",
+      "updated": "Updated",
+      "deleted": "Deleted",
+      "suspended": "Suspended",
+      "activated": "Activated",
+      "published": "Published",
+      "archived": "Archived",
+      "login": "Login",
+      "logout": "Logout"
+    }
   },
   "stores": {
     "title": "Stores",
@@ -244,7 +266,17 @@
     "yes": "Yes",
     "no": "No",
     "enabled": "Enabled",
-    "disabled": "Disabled"
+    "disabled": "Disabled",
+    "viewProfile": "View Profile",
+    "noRecentOrders": "No recent orders",
+    "revenue": "Revenue",
+    "editStoreComingSoon": "Edit store functionality coming soon",
+    "statusTypes": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "pending": "Pending",
+      "inactive": "Inactive"
+    }
   },
   "cms": {
     "title": "Content Management",

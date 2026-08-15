@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Mail,
@@ -25,15 +25,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EditUserDialog } from '@/components/users/edit-user-dialog';
 import { format, formatDistanceToNow } from 'date-fns';
-import { formatUserRole } from '@/lib/utils';
+import { ar, enUS } from 'date-fns/locale';
+import { Locale } from 'date-fns';
+
+// Map next-intl locale to date-fns locale
+const dateFnsLocales: Record<string, Locale> = {
+  en: enUS,
+  ar: ar,
+};
 
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
-  
-  // In Next.js 15, params might be a Promise in some contexts
+  const t = useTranslations();
+
   // Extract id and convert to number
   const [userId, setUserId] = React.useState<number | null>(null);
 
@@ -56,7 +63,7 @@ export default function UserDetailPage() {
   // Fetch user
   React.useEffect(() => {
     if (userId === null || isNaN(userId)) return;
-    
+
     const fetchUser = async () => {
       setLoading(true);
       try {
@@ -117,7 +124,7 @@ export default function UserDetailPage() {
   // Handle delete
   const handleDelete = async () => {
     if (!user) return;
-    if (!confirm('Are you sure you want to delete this user?')) return;
+    if (!confirm(t('users.confirmDelete'))) return;
 
     try {
       await usersEndpoints.deleteUser(user.id);
@@ -127,10 +134,26 @@ export default function UserDetailPage() {
     }
   };
 
+  // Helper to format dates with locale
+  const formatDate = (date: Date | string, formatStr: string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return format(dateObj, formatStr, {
+      locale: dateFnsLocales[locale] || enUS,
+    });
+  };
+
+  const formatRelativeTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return formatDistanceToNow(dateObj, {
+      addSuffix: true,
+      locale: dateFnsLocales[locale] || enUS,
+    });
+  };
+
   if (loading) {
     return (
       <div className="p-8 text-center">
-        <div className="text-muted-foreground">Loading user...</div>
+        <div className="text-muted-foreground">{t('users.loadingUser')}</div>
       </div>
     );
   }
@@ -138,7 +161,7 @@ export default function UserDetailPage() {
   if (!user) {
     return (
       <div className="p-8 text-center">
-        <div className="text-muted-foreground">User not found</div>
+        <div className="text-muted-foreground">{t('users.userNotFound')}</div>
       </div>
     );
   }
@@ -152,7 +175,7 @@ export default function UserDetailPage() {
         onClick={() => router.push(`/${locale}/users`)}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Users
+        {t('users.backToUsers')}
       </Button>
 
       {/* User Header */}
@@ -169,11 +192,13 @@ export default function UserDetailPage() {
             <h1 className="text-3xl font-bold">{user.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <Badge variant={getStatusVariant(user.status)}>
-                {user.status}
+                {t(`users.${user.status}`)}
               </Badge>
-              <Badge variant="info">{formatUserRole(user.role)}</Badge>
+              {user.role && (
+                <Badge variant="info">{t(`users.${user.role}`)}</Badge>
+              )}
               {user.email_verified && (
-                <Badge variant="success">Email Verified</Badge>
+                <Badge variant="success">{t('users.emailVerified')}</Badge>
               )}
             </div>
           </div>
@@ -182,7 +207,7 @@ export default function UserDetailPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
-            Edit
+            {t('common.edit')}
           </Button>
           <Button
             variant="outline"
@@ -192,12 +217,12 @@ export default function UserDetailPage() {
             {user.status === 'active' ? (
               <>
                 <Ban className="mr-2 h-4 w-4" />
-                Suspend
+                {t('users.suspendUser')}
               </>
             ) : (
               <>
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Activate
+                {t('users.activateUser')}
               </>
             )}
           </Button>
@@ -207,7 +232,7 @@ export default function UserDetailPage() {
             onClick={handleDelete}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            {t('common.delete')}
           </Button>
         </div>
       </div>
@@ -227,14 +252,14 @@ export default function UserDetailPage() {
       {/* User Info */}
       <Card>
         <CardHeader>
-          <CardTitle>User Information</CardTitle>
+          <CardTitle>{t('users.userInfo')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-muted-foreground" />
               <div>
-                <div className="text-sm text-muted-foreground">Email</div>
+                <div className="text-sm text-muted-foreground">{t('users.email')}</div>
                 <div className="font-medium">{user.email}</div>
               </div>
             </div>
@@ -242,17 +267,19 @@ export default function UserDetailPage() {
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-muted-foreground" />
               <div>
-                <div className="text-sm text-muted-foreground">Role</div>
-                <div className="font-medium">{formatUserRole(user.role)}</div>
+                <div className="text-sm text-muted-foreground">{t('users.role')}</div>
+                <div className="font-medium">
+                  {user.role ? t(`users.${user.role}`) : t('common.noData')}
+                </div>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5 text-muted-foreground" />
               <div>
-                <div className="text-sm text-muted-foreground">Joined</div>
+                <div className="text-sm text-muted-foreground">{t('users.joined')}</div>
                 <div className="font-medium">
-                  {format(new Date(user.created_at), 'PPP')}
+                  {formatDate(user.created_at, 'PPP')}
                 </div>
               </div>
             </div>
@@ -260,13 +287,11 @@ export default function UserDetailPage() {
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
-                <div className="text-sm text-muted-foreground">Last Login</div>
+                <div className="text-sm text-muted-foreground">{t('users.lastLogin')}</div>
                 <div className="font-medium">
                   {user.stats?.last_login
-                    ? formatDistanceToNow(new Date(user.stats.last_login), {
-                        addSuffix: true,
-                      })
-                    : 'Never'}
+                    ? formatRelativeTime(user.stats.last_login)
+                    : t('users.never')}
                 </div>
               </div>
             </div>
@@ -286,7 +311,7 @@ export default function UserDetailPage() {
                 <div className="text-2xl font-bold">
                   {user.stats?.active_stores ?? 0}
                 </div>
-                <div className="text-sm text-muted-foreground">Active Stores</div>
+                <div className="text-sm text-muted-foreground">{t('users.activeStores')}</div>
               </div>
             </div>
           </CardContent>
@@ -302,7 +327,7 @@ export default function UserDetailPage() {
                 <div className="text-2xl font-bold">
                   ${(user.stats?.total_revenue ?? 0).toLocaleString()}
                 </div>
-                <div className="text-sm text-muted-foreground">Total Revenue</div>
+                <div className="text-sm text-muted-foreground">{t('users.totalRevenue')}</div>
               </div>
             </div>
           </CardContent>
@@ -316,7 +341,7 @@ export default function UserDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold">{user.stats?.total_orders ?? 0}</div>
-                <div className="text-sm text-muted-foreground">Total Orders</div>
+                <div className="text-sm text-muted-foreground">{t('users.totalOrders')}</div>
               </div>
             </div>
           </CardContent>
@@ -330,7 +355,7 @@ export default function UserDetailPage() {
               </div>
               <div>
                 <div className="text-2xl font-bold">{user.stores_count ?? 0}</div>
-                <div className="text-sm text-muted-foreground">Total Stores</div>
+                <div className="text-sm text-muted-foreground">{t('users.totalStores')}</div>
               </div>
             </div>
           </CardContent>
@@ -340,7 +365,7 @@ export default function UserDetailPage() {
       {/* Recent Activity */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>{t('users.recentActivity')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -354,31 +379,34 @@ export default function UserDetailPage() {
                     <Clock className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{activity.action.replace('_', ' ')}</div>
+                    <div className="font-medium">
+                      {t(`users.activityTypes.${activity.action}`)}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       {activity.description}
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(activity.created_at), {
-                      addSuffix: true,
-                    })}
+                    {formatRelativeTime(activity.created_at)}
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                No recent activity
+                {t('users.noRecentActivity')}
               </div>
             )}
           </div>
         </CardContent>
       </Card>
+
       {/* Stores */}
       {(user.stores ?? []).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Stores ({user.stores?.length ?? 0})</CardTitle>
+            <CardTitle>
+              {t('users.stores')} ({user.stores?.length ?? 0})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -395,10 +423,10 @@ export default function UserDetailPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant={getStatusVariant(store.status)}>
-                      {store.status}
+                      {t(`stores.statusTypes.${store.status}`) || store.status}
                     </Badge>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(store.created_at), 'PP')}
+                      {formatDate(store.created_at, 'PP')}
                     </div>
                   </div>
                 </div>

@@ -55,24 +55,46 @@ export const storesEndpoints = {
    * Suspend store
    */
   async suspendStore(id: number): Promise<Store> {
-    const response = await apiClient.request<{ success: boolean; message: string; data: Store }>(
-      `/api/v1/platform/stores/${id}/suspend`,
-      { method: 'PATCH' }
-    );
-    
-    return response.data.data;
+    try {
+      const response = await apiClient.request<{ success: boolean; message: string; data: Store }>(
+        `/api/v1/platform/stores/${id}/suspend`,
+        { method: 'PATCH' }
+      );
+      
+      console.log('Suspend store response:', response);
+      
+      if (!response.data) {
+        throw new Error('Invalid response structure - missing data field');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error in suspendStore:', error);
+      throw error;
+    }
   },
 
   /**
    * Activate store
    */
   async activateStore(id: number): Promise<Store> {
-    const response = await apiClient.request<{ success: boolean; message: string; data: Store }>(
-      `/api/v1/platform/stores/${id}/activate`,
-      { method: 'PATCH' }
-    );
-    
-    return response.data.data;
+    try {
+      const response = await apiClient.request<{ success: boolean; message: string; data: Store }>(
+        `/api/v1/platform/stores/${id}/activate`,
+        { method: 'PATCH' }
+      );
+      
+      console.log('Activate store response:', response);
+      
+      if (!response.data) {
+        throw new Error('Invalid response structure - missing data field');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error in activateStore:', error);
+      throw error;
+    }
   },
 
   /**

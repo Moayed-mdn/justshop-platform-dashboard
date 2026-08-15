@@ -63,10 +63,20 @@ interface BackendDashboardResponse {
 interface BackendAnalyticsResponse {
   success: boolean;
   data: {
-    userGrowth: Array<{ date: string; count: number }>;
-    storeGrowth: Array<{ date: string; count: number }>;
-    revenueByStore: Array<{ storeName: string; revenue: number }>;
-    storeStatus: Array<{ status: string; count: number }>;
+    summary: {
+      total_revenue: number;
+      total_orders: number;
+      total_users: number;
+      total_stores: number;
+    };
+    charts: {
+      revenue_trend: Array<{ date: string; value: number }>;
+      orders_trend: Array<{ date: string; value: number }>;
+      users_trend: Array<{ date: string; value: number }>;
+      stores_trend: Array<{ date: string; value: number }>;
+    };
+    top_stores: Array<{ name: string; revenue: number }>;
+    recent_activity: Array<any>;
   };
 }
 
@@ -160,9 +170,9 @@ export async function getUserGrowthData(period: string = '30d'): Promise<TimeSer
   const analytics = await getAnalyticsData();
   
   return {
-    data: analytics.userGrowth.map(item => ({
+    data: (analytics.charts.users_trend || []).map(item => ({
       date: item.date,
-      value: item.count,
+      value: item.value,
       label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     })),
     period,
@@ -176,9 +186,9 @@ export async function getStoreGrowthData(period: string = '30d'): Promise<TimeSe
   const analytics = await getAnalyticsData();
   
   return {
-    data: analytics.storeGrowth.map(item => ({
+    data: (analytics.charts.stores_trend || []).map(item => ({
       date: item.date,
-      value: item.count,
+      value: item.value,
       label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     })),
     period,
@@ -187,17 +197,15 @@ export async function getStoreGrowthData(period: string = '30d'): Promise<TimeSe
 
 /**
  * Fetch revenue chart data
- * Note: Backend doesn't have separate revenue endpoint yet, returns store revenue data
  */
 export async function getRevenueData(period: string = '12m'): Promise<TimeSeriesData> {
   const analytics = await getAnalyticsData();
   
-  // Convert revenueByStore to time series format (best effort mapping)
   return {
-    data: analytics.revenueByStore.map((item, index) => ({
-      date: new Date().toISOString().split('T')[0],
-      value: item.revenue,
-      label: item.storeName,
+    data: (analytics.charts.revenue_trend || []).map(item => ({
+      date: item.date,
+      value: item.value,
+      label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     })),
     period,
   };

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Save, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { cmsEndpoints, UpdatePagePayload } from '@/lib/api/endpoints/cms';
@@ -14,6 +14,7 @@ import { PageForm } from '@/components/cms/PageForm';
 
 export default function EditPagePage() {
   const locale = useLocale();
+  const t = useTranslations('common');
   const router = useRouter();
   const params = useParams();
   const id = parseInt(params.id as string, 10);
@@ -72,11 +73,11 @@ export default function EditPagePage() {
   if (!page) {
     return (
       <div className="p-8 text-center">
-        <div className="text-muted-foreground">Page not found</div>
+        <div className="text-muted-foreground">{t('pageNotFound')}</div>
         <Link href={`/${locale}/cms/pages`}>
           <Button variant="outline" className="mt-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Pages
+            {t('backToPages')}
           </Button>
         </Link>
       </div>

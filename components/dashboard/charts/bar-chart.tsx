@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3 } from 'lucide-react';
@@ -19,6 +20,8 @@ export function BarChart({
   dataKey = 'value',
   loading = false,
 }: BarChartProps) {
+  const t = useTranslations('common');
+
   if (loading) {
     return (
       <Card>
@@ -54,8 +57,8 @@ export function BarChart({
               <BarChart3 className="h-6 w-6 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">No data available</p>
-              <p className="text-xs text-muted-foreground/70">Chart will appear once data is collected</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('noData')}</p>
+              <p className="text-xs text-muted-foreground/70">{t('chartWillAppear')}</p>
             </div>
           </div>
         </CardContent>
