@@ -107,26 +107,6 @@ export default function FeatureFlagsPage() {
     }
   };
 
-  // Get target badge
-  const getTargetBadge = (flag: FeatureFlag) => {
-    switch (flag.target_type) {
-      case 'all':
-        return <Badge variant="default">{t('allUsers')}</Badge>;
-      case 'percentage':
-        return (
-          <Badge variant="info">
-            {t('percentageRollout', { value: flag.target_value })}
-          </Badge>
-        );
-      case 'users':
-        return <Badge variant="secondary">{t('specificUsers')}</Badge>;
-      case 'stores':
-        return <Badge variant="secondary">{t('specificStores')}</Badge>;
-      default:
-        return null;
-    }
-  };
-
   // Get environment badge
   const getEnvironmentBadge = (env: string) => {
     const variants: Record<string, BadgeProps['variant']> = {

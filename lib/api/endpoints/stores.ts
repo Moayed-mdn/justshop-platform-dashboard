@@ -67,7 +67,7 @@ export const storesEndpoints = {
         throw new Error('Invalid response structure - missing data field');
       }
       
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Error in suspendStore:', error);
       throw error;
@@ -90,7 +90,7 @@ export const storesEndpoints = {
         throw new Error('Invalid response structure - missing data field');
       }
       
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Error in activateStore:', error);
       throw error;
