@@ -103,8 +103,11 @@ npm run dev
 The dashboard should run on:
 
 ```text
-http://localhost:3002
+http://localhost:3001
 ```
+
+> `package.json`'s `dev` script pins this to port 3001 (`next dev --webpack -p 3001`). If you're
+> coming from an older note that says 3000 or 3002, this is the current, correct port.
 
 ## Environment Variables
 
@@ -139,7 +142,16 @@ lib/            API clients, helpers, providers, stores
 locales/        English and Arabic translation files
 public/         Static assets
 docs/           Project documentation
+  guides/         How-to guides (quick start, CSS utilities, plan management)
+  features/       Living reference docs for what's currently implemented
+  archive/        Historical build logs, phase by phase and feature by feature
 ```
+
+## Documentation
+
+- Start with [`docs/README.md`](./docs/README.md) for a map of everything below.
+- [`CHANGELOG.md`](./CHANGELOG.md) tracks notable changes release over release.
+- [`docs/guides/quick-start.md`](./docs/guides/quick-start.md) gets a fresh checkout running.
 
 ## Screenshots
 
